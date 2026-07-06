@@ -2,13 +2,13 @@ name: Release Build
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ "main"]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 env:
   SCCACHE_GHA_ENABLED: "true"
-  SCCACHE_CACHE_SIZE: 2G
 
 jobs:
   build:

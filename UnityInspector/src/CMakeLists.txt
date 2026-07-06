@@ -36,10 +36,12 @@ target_include_directories(UnityInspector PUBLIC
     "${PROJECT_SOURCE_DIR}/UnityInspector/src/pch"
 )
 
+target_precompile_headers(UnityInspector PRIVATE pch/pch.h)
+
 target_link_libraries(UnityInspector PRIVATE
         imgui
         kiero
-        "${PROJECT_SOURCE_DIR}/UnityInspector/library/detours/[x64]detours.lib"
+        "${PROJECT_SOURCE_DIR}/UnityInspector/library/detours/detours.lib"
         "${PROJECT_SOURCE_DIR}/UnityInspector/library/luajit/lua51.lib"
 )
 
@@ -60,7 +62,12 @@ if(MSVC)
             $<$<CONFIG:RELEASE>:/GS->
             $<$<CONFIG:RELEASE>:/GR->
     )
-    target_link_options(UnityInspector PRIVATE $<$<CONFIG:RELEASE>:/OPT:NOICF>)
+    target_link_options(UnityInspector PRIVATE 
+        $<$<CONFIG:RELEASE>:/OPT:NOICF>
+        $<$<CONFIG:RELEASE>:/LTCG>
+        $<$<CONFIG:DEBUG>:/NODEFAULTLIB:LIBCMT>
+        $<$<CONFIG:DEBUG>:/NODEFAULTLIB:LIBCMTD>
+    )
 endif()
 
 
