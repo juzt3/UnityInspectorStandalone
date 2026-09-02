@@ -3,9 +3,18 @@
 
 void Hooks::Init()
 {
-	for (auto& factory : GetRegistry())
+	const auto installForAssembly = [](const UR::Assembly* assembly)
 	{
-		const auto hook = factory();
-		hook->Install();
-	}
+		if (!assembly) return;
+
+		for (auto& factory : GetRegistry())
+		{
+			const auto hook = factory();
+			if (hook->TargetAssembly() == assembly->name) hook->Install();
+		}
+	};
+
+	if (UR::OnAssemblyLoaded(installForAssembly)) return;
+
+	for (const auto& assembly : UR::assembly) installForAssembly(assembly.get());
 }

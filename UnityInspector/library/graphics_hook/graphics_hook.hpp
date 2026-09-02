@@ -8,8 +8,8 @@
 #include <windows.h>
 
 #include "console/Console.hpp"
-#include "kiero.generated.hpp"
 #include "kiero.hpp"
+#include "kiero.generated.hpp"
 #include "safetyhook/HookManager.h"
 
 #pragma comment(lib, "d3d11.lib")

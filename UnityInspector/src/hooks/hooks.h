@@ -5,6 +5,7 @@ class IHook
 {
 public:
 	virtual ~IHook() = default;
+	virtual std::string_view TargetAssembly() const = 0;
 	virtual void Install() = 0;
 };
 
