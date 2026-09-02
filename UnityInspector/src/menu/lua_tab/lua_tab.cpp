@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "lua_tab.h"
-#include "features/lua_system/lua_system.h"
 #include "features/lua_system/lua_plugin.h"
+#include "features/lua_system/lua_system.h"
+#include "lua_tab.h"
 
 void LuaConsoleTab::Render()
 {
@@ -13,8 +13,7 @@ void LuaConsoleTab::Render()
 		{
 			ImGui::TextDisabled("Lua not initialized");
 			ImGui::Spacing();
-			if (ImGui::Button("Initialize Lua", ImVec2(150, 0)))
-				luaSystem->EnsureInitialized();
+			if (ImGui::Button("Initialize Lua", ImVec2(150, 0))) luaSystem->EnsureInitialized();
 		}
 		else
 		{
@@ -23,15 +22,13 @@ void LuaConsoleTab::Render()
 			ImGui::Spacing();
 
 			bool consoleVisible = luaSystem->IsConsoleVisible();
-			if (ImGui::Checkbox("Show Lua Console", &consoleVisible))
-				luaSystem->SetConsoleVisible(consoleVisible);
+			if (ImGui::Checkbox("Show Lua Console", &consoleVisible)) luaSystem->SetConsoleVisible(consoleVisible);
 
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
 
-			if (ImGui::Button("Reload All Plugins", ImVec2(150, 0)))
-				luaSystem->ReloadAll();
+			if (ImGui::Button("Reload All Plugins", ImVec2(150, 0))) luaSystem->ReloadAll();
 
 			ImGui::Spacing();
 			ImGui::Text("Loaded Plugins (%zu):", luaSystem->GetPlugins().size());
@@ -43,27 +40,23 @@ void LuaConsoleTab::Render()
 				ImGui::PushID(static_cast<int>(i));
 
 				bool enabled = plugin->IsEnabled();
-				if (ImGui::Checkbox(plugin->GetName().c_str(), &enabled))
-					plugin->SetEnabled(enabled);
+				if (ImGui::Checkbox(plugin->GetName().c_str(), &enabled)) plugin->SetEnabled(enabled);
 
 				if (plugin->HasError())
 				{
 					ImGui::SameLine();
 					ImGui::TextColored(ImVec4(1, 0, 0, 1), "[ERROR]");
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("%s", plugin->GetError().c_str());
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", plugin->GetError().c_str());
 				}
 
 				ImGui::SameLine();
 				if (plugin->IsLoaded())
 				{
-					if (ImGui::SmallButton("Unload"))
-						plugin->Unload();
+					if (ImGui::SmallButton("Unload")) plugin->Unload();
 				}
 				else
 				{
-					if (ImGui::SmallButton("Reload"))
-						plugin->Reload();
+					if (ImGui::SmallButton("Reload")) plugin->Reload();
 				}
 
 				ImGui::PopID();

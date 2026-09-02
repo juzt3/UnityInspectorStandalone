@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "debug_tab.h"
 #include "config/config.h"
+#include "debug_tab.h"
 
 void DebugTab::Render()
 {

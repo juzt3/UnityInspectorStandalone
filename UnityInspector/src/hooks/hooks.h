@@ -22,12 +22,11 @@ public:
 	}
 };
 
-#define REGISTER_HOOK(HookClass)                                          \
-    static struct HookClass##_Registrar {                                 \
-        HookClass##_Registrar() {                                         \
-            Hooks::GetRegistry().push_back(                               \
-                []() -> std::unique_ptr<IHook> {                          \
-                    return std::make_unique<HookClass>();                 \
-                });                                                       \
-        }                                                                 \
-    } s_##HookClass##_registrar;
+#define REGISTER_HOOK(HookClass)                                                                                       \
+	static struct HookClass##_Registrar                                                                                \
+	{                                                                                                                  \
+		HookClass##_Registrar()                                                                                        \
+		{                                                                                                              \
+			Hooks::GetRegistry().push_back([]() -> std::unique_ptr<IHook> { return std::make_unique<HookClass>(); });  \
+		}                                                                                                              \
+	} s_##HookClass##_registrar;

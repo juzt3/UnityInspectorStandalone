@@ -1,17 +1,15 @@
 #include "pch.h"
-#include "lua_plugin.h"
 #include "features/debug_console/debug_console.h"
+#include "lua_plugin.h"
 
-LuaPlugin::LuaPlugin(sol::state& lua, const std::filesystem::path& path)
-	: luaState(lua), filePath(path)
+LuaPlugin::LuaPlugin(sol::state& lua, const std::filesystem::path& path) : luaState(lua), filePath(path)
 {
 	name = path.stem().string();
 }
 
 LuaPlugin::~LuaPlugin()
 {
-	if (loaded)
-		Unload();
+	if (loaded) Unload();
 }
 
 bool LuaPlugin::LoadFile()
@@ -82,8 +80,7 @@ void LuaPlugin::UpdateStoredWriteTime()
 
 void LuaPlugin::Init()
 {
-	if (!LoadFile())
-		return;
+	if (!LoadFile()) return;
 
 	CaptureGlobalFunction("onInit", onInit);
 	CaptureGlobalFunction("onUpdate", onUpdate);
@@ -106,8 +103,7 @@ void LuaPlugin::Init()
 
 void LuaPlugin::Update(float deltaTime)
 {
-	if (!loaded || !enabled || !onUpdate.valid())
-		return;
+	if (!loaded || !enabled || !onUpdate.valid()) return;
 
 	if (sol::protected_function_result result = onUpdate(deltaTime); !result.valid())
 	{
@@ -120,8 +116,7 @@ void LuaPlugin::Update(float deltaTime)
 
 void LuaPlugin::Render()
 {
-	if (!loaded || !enabled || !onRender.valid())
-		return;
+	if (!loaded || !enabled || !onRender.valid()) return;
 
 	if (sol::protected_function_result result = onRender(); !result.valid())
 	{

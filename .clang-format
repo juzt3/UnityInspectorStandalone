@@ -15,7 +15,7 @@ IndentCaseLabels: true
 PointerAlignment: Left
 ReferenceAlignment: Left
 DerivePointerAlignment: false
-Standard: c++23
+Standard: Latest
 
 AllowShortFunctionsOnASingleLine: InlineOnly
 AllowShortIfStatementsOnASingleLine: WithoutElse

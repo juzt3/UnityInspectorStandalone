@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "input.h"
-#include "input_forwarder.h"
+#include "config/config.h"
 #include "external_overlay.h"
 #include "imgui/imgui.h"
-#include "config/config.h"
+#include "input.h"
+#include "input_forwarder.h"
 
 namespace Input
 {
@@ -18,25 +18,24 @@ namespace Input
 	{
 		switch (action)
 		{
-		case InputAction::ToggleMenu:
+			case InputAction::ToggleMenu:
 			{
 				auto& showMenu = Config::state.showMenu;
 				showMenu = !showMenu;
 				ImGui::GetIO().MouseDrawCursor = showMenu;
 				ClipCursor(nullptr);
 
-				if (Config::settings.ini.external_overlay)
-					ExternalOverlay::SetInputCapture(showMenu);
+				if (Config::settings.ini.external_overlay) ExternalOverlay::SetInputCapture(showMenu);
 				break;
 			}
-		case InputAction::ToggleCursor:
+			case InputAction::ToggleCursor:
 			{
 				auto& showCursor = Config::state.showCursor;
 				showCursor = !showCursor;
 				showCursor ? ShowCursor(TRUE) : ShowCursor(FALSE);
 				break;
 			}
-		case InputAction::UnlockCursor:
+			case InputAction::UnlockCursor:
 			{
 				ClipCursor(nullptr);
 				break;
@@ -50,13 +49,10 @@ namespace Input
 		{
 			switch (wParam)
 			{
-			case VK_INSERT: TriggerAction(InputAction::ToggleMenu);
-				return true;
-			case VK_F5: TriggerAction(InputAction::ToggleCursor);
-				return true;
-			case VK_F6: TriggerAction(InputAction::UnlockCursor);
-				return true;
-			default: break;
+				case VK_INSERT: TriggerAction(InputAction::ToggleMenu); return true;
+				case VK_F5: TriggerAction(InputAction::ToggleCursor); return true;
+				case VK_F6: TriggerAction(InputAction::UnlockCursor); return true;
+				default: break;
 			}
 		}
 		return false;

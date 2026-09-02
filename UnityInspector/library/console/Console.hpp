@@ -9,15 +9,17 @@
 #define LOG_WARNING(format, ...) console::OutConsole(console::Warning, format, __FILE__, __LINE__, ##__VA_ARGS__)
 #define LOG_ERROR(format, ...) console::OutConsole(console::Error, format, __FILE__, __LINE__, ##__VA_ARGS__)
 
-
-namespace console {
-	enum OutType : uint8_t {
+namespace console
+{
+	enum OutType : uint8_t
+	{
 		Info,
 		Debug,
 		Warning,
 		Error
 	};
-	enum Color : uint8_t {
+	enum Color : uint8_t
+	{
 		Black,
 		Blue,
 		Green,
@@ -36,69 +38,76 @@ namespace console {
 		BrightWhite
 	};
 
-	template<typename... Args>
-	auto OutConsole(const OutType type, const std::string& format, const std::string& file, int line, Args&&... args) -> void {
+	template <typename... Args>
+	auto OutConsole(const OutType type, const std::string& format, const std::string& file, int line, Args&&... args)
+	    -> void
+	{
 		const auto hWnd_ = GetStdHandle(STD_OUTPUT_HANDLE);
 
 		std::string text;
-		if constexpr (sizeof...(args) > 0) {
+		if constexpr (sizeof...(args) > 0)
+		{
 			text = std::vformat(format, std::make_format_args(args...));
 		}
-		else {
+		else
+		{
 			text = format;
 		}
 
-		switch (type) {
-		case Info:
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Green * 16);
-			std::cout << " ";
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
-			std::cout << "[";
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Green);
-			std::cout << "Info ";
-			break;
-		case Debug:
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Blue * 16);
-			std::cout << " ";
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
-			std::cout << "[";
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Blue);
-			std::cout << "Debug";
-			break;
-		case Warning:
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Yellow * 16);
-			std::cout << " ";
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
-			std::cout << "[";
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Yellow);
-			std::cout << "Warn ";
-			break;
-		case Error:
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Red * 16);
-			std::cout << " ";
-			SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
-			std::cout << "[";
-			SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Red);
-			std::cout << "Error";
-			break;
+		switch (type)
+		{
+			case Info:
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Green * 16);
+				std::cout << " ";
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
+				std::cout << "[";
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Green);
+				std::cout << "Info ";
+				break;
+			case Debug:
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Blue * 16);
+				std::cout << " ";
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
+				std::cout << "[";
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Blue);
+				std::cout << "Debug";
+				break;
+			case Warning:
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Yellow * 16);
+				std::cout << " ";
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
+				std::cout << "[";
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Yellow);
+				std::cout << "Warn ";
+				break;
+			case Error:
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Red * 16);
+				std::cout << " ";
+				SetConsoleTextAttribute(hWnd_, BACKGROUND_INTENSITY | Black);
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
+				std::cout << "[";
+				SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Red);
+				std::cout << "Error";
+				break;
 		}
 		SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
 		std::cout << "]>[";
 		SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | Purple);
-		std::cout<< std::format("{}:{}", file.substr(file.find_last_of('\\') + 1), line);
+		std::cout << std::format("{}:{}", file.substr(file.find_last_of('\\') + 1), line);
 		SetConsoleTextAttribute(hWnd_, FOREGROUND_INTENSITY | White);
 		std::cout << std::format("] :{}\n", text);
 	}
 
-	inline auto StartConsole(const char* title, const bool close) -> HWND {
+	inline auto StartConsole(const char* title, const bool close) -> HWND
+	{
 		HWND hWnd_ = nullptr;
 		AllocConsole();
 		SetConsoleTitleA(title);
-		while (nullptr == hWnd_) hWnd_ = GetConsoleWindow();
+		while (nullptr == hWnd_)
+			hWnd_ = GetConsoleWindow();
 		const auto menu_ = GetSystemMenu(hWnd_, FALSE);
 		if (!close) DeleteMenu(menu_, SC_CLOSE, MF_BYCOMMAND);
 		SetWindowLong(hWnd_, GWL_STYLE, GetWindowLong(hWnd_, GWL_STYLE) & ~WS_MAXIMIZEBOX);
@@ -109,7 +118,8 @@ namespace console {
 		return hWnd_;
 	}
 
-	inline auto EndConsole() -> void {
+	inline auto EndConsole() -> void
+	{
 		fclose(stdout);
 		fclose(stderr);
 		fclose(stdin);

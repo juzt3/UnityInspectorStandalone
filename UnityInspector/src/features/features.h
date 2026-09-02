@@ -25,12 +25,12 @@ namespace Features
 	void Render();
 }
 
-#define REGISTER_FEATURE(FeatureClass)                                    \
-    static struct FeatureClass##_Registrar {                              \
-        FeatureClass##_Registrar() {                                      \
-            Features::GetRegistry().push_back(                            \
-                []() -> std::unique_ptr<IFeature> {                       \
-                    return std::make_unique<FeatureClass>();               \
-                });                                                       \
-        }                                                                 \
-    } s_##FeatureClass##_registrar;
+#define REGISTER_FEATURE(FeatureClass)                                                                                 \
+	static struct FeatureClass##_Registrar                                                                             \
+	{                                                                                                                  \
+		FeatureClass##_Registrar()                                                                                     \
+		{                                                                                                              \
+			Features::GetRegistry().push_back([]() -> std::unique_ptr<IFeature>                                        \
+			                                  { return std::make_unique<FeatureClass>(); });                           \
+		}                                                                                                              \
+	} s_##FeatureClass##_registrar;

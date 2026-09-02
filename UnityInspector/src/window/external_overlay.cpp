@@ -23,13 +23,9 @@ namespace ExternalOverlay
 
 		switch (msg)
 		{
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			return 0;
-		case WM_MOUSEACTIVATE:
-			return MA_ACTIVATE;
-		default:
-			return DefWindowProc(hwnd, msg, wParam, lParam);
+			case WM_DESTROY: PostQuitMessage(0); return 0;
+			case WM_MOUSEACTIVATE: return MA_ACTIVATE;
+			default: return DefWindowProc(hwnd, msg, wParam, lParam);
 		}
 	}
 
@@ -44,32 +40,21 @@ namespace ExternalOverlay
 		wc.lpszClassName = className;
 		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 
-		if (!RegisterClassExW(&wc))
-			return false;
+		if (!RegisterClassExW(&wc)) return false;
 
 		RECT gameRect;
 		GetWindowRect(m_gameHwnd, &gameRect);
 
-		m_overlayHwnd = CreateWindowExW(
-			WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE,
-			className,
-			L"UnityInspector",
-			WS_POPUP,
-			gameRect.left,
-			gameRect.top,
-			gameRect.right - gameRect.left,
-			gameRect.bottom - gameRect.top,
-			nullptr,
-			nullptr,
-			m_instance,
-			nullptr
-		);
+		m_overlayHwnd =
+		    CreateWindowExW(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE, className,
+		                    L"UnityInspector", WS_POPUP, gameRect.left, gameRect.top, gameRect.right - gameRect.left,
+		                    gameRect.bottom - gameRect.top, nullptr, nullptr, m_instance, nullptr);
 
 		if (!m_overlayHwnd) return false;
 
 		SetLayeredWindowAttributes(m_overlayHwnd, 0, 255, LWA_ALPHA);
 
-		MARGINS margins = { -1, -1, -1, -1 };
+		MARGINS margins = {-1, -1, -1, -1};
 		if (!SUCCEEDED(DwmExtendFrameIntoClientArea(m_overlayHwnd, &margins))) return false;
 
 		ShowWindow(m_overlayHwnd, SW_SHOW);
@@ -97,20 +82,9 @@ namespace ExternalOverlay
 
 		constexpr D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 
-		const HRESULT hr = D3D11CreateDeviceAndSwapChain(
-			nullptr,
-			D3D_DRIVER_TYPE_HARDWARE,
-			nullptr,
-			0,
-			&featureLevel,
-			1,
-			D3D11_SDK_VERSION,
-			&sd,
-			&m_swapChain,
-			&m_device,
-			nullptr,
-			&m_context
-		);
+		const HRESULT hr =
+		    D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, &featureLevel, 1,
+		                                  D3D11_SDK_VERSION, &sd, &m_swapChain, &m_device, nullptr, &m_context);
 
 		if (FAILED(hr)) return false;
 
@@ -174,7 +148,7 @@ namespace ExternalOverlay
 		RECT clientRect;
 		if (!GetClientRect(m_gameHwnd, &clientRect)) return;
 
-		POINT topLeft = { clientRect.left, clientRect.top };
+		POINT topLeft = {clientRect.left, clientRect.top};
 		ClientToScreen(m_gameHwnd, &topLeft);
 
 		const int clientWidth = clientRect.right - clientRect.left;
@@ -184,18 +158,12 @@ namespace ExternalOverlay
 		GetWindowRect(m_overlayHwnd, &overlayRect);
 		const int overlayWidth = overlayRect.right - overlayRect.left;
 
-		if (const int overlayHeight = overlayRect.bottom - overlayRect.top; topLeft.x != overlayRect.left || topLeft.y != overlayRect.top ||
-			clientWidth != overlayWidth || clientHeight != overlayHeight)
+		if (const int overlayHeight = overlayRect.bottom - overlayRect.top;
+		    topLeft.x != overlayRect.left || topLeft.y != overlayRect.top || clientWidth != overlayWidth ||
+		    clientHeight != overlayHeight)
 		{
-			SetWindowPos(
-				m_overlayHwnd,
-				HWND_TOPMOST,
-				topLeft.x,
-				topLeft.y,
-				clientWidth,
-				clientHeight,
-				SWP_NOACTIVATE | SWP_SHOWWINDOW
-			);
+			SetWindowPos(m_overlayHwnd, HWND_TOPMOST, topLeft.x, topLeft.y, clientWidth, clientHeight,
+			             SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
 			if (m_swapChain && (clientWidth != overlayWidth || clientHeight != overlayHeight))
 			{
@@ -205,8 +173,8 @@ namespace ExternalOverlay
 				if (SUCCEEDED(m_swapChain->ResizeBuffers(0, clientWidth, clientHeight, DXGI_FORMAT_UNKNOWN, 0)))
 				{
 					ID3D11Texture2D* backBuffer = nullptr;
-					if (SUCCEEDED(
-						m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer))))
+					if (SUCCEEDED(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+					                                     reinterpret_cast<void**>(&backBuffer))))
 					{
 						SUCCEEDED(m_device->CreateRenderTargetView(backBuffer, nullptr, &m_targetView));
 						backBuffer->Release();
@@ -285,7 +253,8 @@ namespace ExternalOverlay
 			SetActiveWindow(m_overlayHwnd);
 			SetFocus(m_overlayHwnd);
 
-			while (ShowCursor(TRUE) < 0);
+			while (ShowCursor(TRUE) < 0)
+				;
 		}
 		else
 		{
@@ -297,7 +266,8 @@ namespace ExternalOverlay
 			SetForegroundWindow(m_gameHwnd);
 			SetActiveWindow(m_gameHwnd);
 
-			while (ShowCursor(FALSE) >= 0);
+			while (ShowCursor(FALSE) >= 0)
+				;
 		}
 	}
 }

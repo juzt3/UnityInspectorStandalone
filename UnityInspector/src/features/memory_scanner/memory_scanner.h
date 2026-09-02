@@ -1,9 +1,23 @@
 #pragma once
 #include "features/features.h"
 
-enum class ScanValueType { Int, Long, Float, Double, Bool };
+enum class ScanValueType
+{
+	Int,
+	Long,
+	Float,
+	Double,
+	Bool
+};
 
-enum class ScanComparison { Exact, Increased, Decreased, Changed, Unchanged };
+enum class ScanComparison
+{
+	Exact,
+	Increased,
+	Decreased,
+	Changed,
+	Unchanged
+};
 
 enum class ActualFieldType
 {
@@ -56,7 +70,13 @@ public:
 	~MemoryScanner() override;
 
 private:
-	enum class ScanOperation { None, FirstScan, NextScan, Reset };
+	enum class ScanOperation
+	{
+		None,
+		FirstScan,
+		NextScan,
+		Reset
+	};
 
 	ScanValueType selectedType = ScanValueType::Int;
 	ScanComparison comparison = ScanComparison::Exact;
@@ -102,10 +122,7 @@ private:
 		void* address;
 		void* klass;
 
-		bool operator==(const VisitedKey& o) const noexcept
-		{
-			return address == o.address && klass == o.klass;
-		}
+		bool operator==(const VisitedKey& o) const noexcept { return address == o.address && klass == o.klass; }
 	};
 
 	struct VisitedKeyHash

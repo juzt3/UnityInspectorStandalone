@@ -1,16 +1,16 @@
 #pragma once
 
-#include <windows.h>
 #include <d3d11.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <functional>
 #include <vector>
+#include <windows.h>
 
-#include "kiero.hpp"
-#include "kiero.generated.hpp"
-#include "safetyhook/HookManager.h"
 #include "console/Console.hpp"
+#include "kiero.generated.hpp"
+#include "kiero.hpp"
+#include "safetyhook/HookManager.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3d12.lib")
@@ -49,8 +49,8 @@ namespace graphics_hook
 			{
 				if (d3d11Out.swapchain_methods.size() > 8)
 				{
-					if (auto oPresent = d3d11Out.swapchain_methods[8]; HookManager::Install(
-						reinterpret_cast<PresentFn>(oPresent), MyPresent))
+					if (auto oPresent = d3d11Out.swapchain_methods[8];
+					    HookManager::Install(reinterpret_cast<PresentFn>(oPresent), MyPresent))
 					{
 						ok = true;
 					}
@@ -176,8 +176,8 @@ namespace graphics_hook
 					hWnd = sd.OutputWindow;
 
 					ID3D11Texture2D* pBackBuffer = nullptr;
-					if (SUCCEEDED(
-						pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<LPVOID*>(&pBackBuffer))))
+					if (SUCCEEDED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+					                                    reinterpret_cast<LPVOID*>(&pBackBuffer))))
 					{
 						SUCCEEDED(gDevice->CreateRenderTargetView(pBackBuffer, nullptr, &gTargetView));
 						pBackBuffer->Release();
@@ -189,7 +189,7 @@ namespace graphics_hook
 					// Try D3D12 Device
 					ID3D12Device* d3d12Device = nullptr;
 					if (SUCCEEDED(
-						pSwapChain->GetDevice(__uuidof(ID3D12Device), reinterpret_cast<void**>(&d3d12Device))))
+					        pSwapChain->GetDevice(__uuidof(ID3D12Device), reinterpret_cast<void**>(&d3d12Device))))
 					{
 						g_Api = RenderAPI::D3D12;
 						gDevice12 = d3d12Device;
@@ -237,8 +237,8 @@ namespace graphics_hook
 					hWnd = sd.OutputWindow;
 
 					ID3D11Texture2D* pBackBuffer = nullptr;
-					if (SUCCEEDED(
-						pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<LPVOID*>(&pBackBuffer))))
+					if (SUCCEEDED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+					                                    reinterpret_cast<LPVOID*>(&pBackBuffer))))
 					{
 						SUCCEEDED(gDevice->CreateRenderTargetView(pBackBuffer, nullptr, &gTargetView));
 						pBackBuffer->Release();
@@ -250,7 +250,7 @@ namespace graphics_hook
 					// Try D3D12 Device
 					ID3D12Device* d3d12Device = nullptr;
 					if (SUCCEEDED(
-						pSwapChain->GetDevice(__uuidof(ID3D12Device), reinterpret_cast<void**>(&d3d12Device))))
+					        pSwapChain->GetDevice(__uuidof(ID3D12Device), reinterpret_cast<void**>(&d3d12Device))))
 					{
 						g_Api = RenderAPI::D3D12;
 						gDevice12 = d3d12Device;
@@ -294,10 +294,10 @@ namespace graphics_hook
 			{
 				switch (const LRESULT result = wndProc(hwnd, uMsg, wParam, lParam))
 				{
-				case 0: return DefWindowProc(hwnd, uMsg, wParam, lParam);
-				case 1: return CallWindowProc(oldWndProc, hwnd, uMsg, wParam, lParam);
-				case 2: return 0;
-				default: return result;
+					case 0: return DefWindowProc(hwnd, uMsg, wParam, lParam);
+					case 1: return CallWindowProc(oldWndProc, hwnd, uMsg, wParam, lParam);
+					case 2: return 0;
+					default: return result;
 				}
 			}
 			return CallWindowProc(oldWndProc, hwnd, uMsg, wParam, lParam);

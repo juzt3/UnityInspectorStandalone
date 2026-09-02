@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "misc_tab.h"
 #include "config/config.h"
+#include "misc_tab.h"
 #include "window/window.h"
 
 void MiscTab::Render()

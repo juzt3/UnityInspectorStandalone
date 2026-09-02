@@ -8,37 +8,36 @@
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 // Windows
-#include <windows.h>
-#include <excpt.h>
 #include <dwmapi.h>
-#include <winhttp.h>
+#include <excpt.h>
 #include <shellapi.h>
+#include <windows.h>
+#include <winhttp.h>
 #pragma comment(lib, "dwmapi")
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "shell32.lib")
 
 // std
-#include <cstdio>
-#include <cstdint>
-#include <vector>
-#include <chrono>
-#include <thread>
-#include <future>
-#include <utility>
 #include <algorithm>
-#include <unordered_set>
-#include <unordered_map>
-#include <format>
-#include <ranges>
-#include <deque>
 #include <array>
-#include <utility>
-#include <mutex>
 #include <atomic>
-#include <memory>
-#include <string>
 #include <cctype>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <deque>
+#include <format>
+#include <future>
+#include <memory>
+#include <mutex>
 #include <numbers>
+#include <ranges>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 // Graphics
 #include <d3d11.h>
@@ -52,34 +51,35 @@
 #include "unityresolve/UnityResolve.hpp"
 
 // Hook
-#include "safetyhook/HookManager.h"
 #include "graphics_hook/graphics_hook.hpp"
+#include "safetyhook/HookManager.h"
 
 // ImGui
+#include "imgui/TextEditor.h"
 #include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
 #include "imgui/imgui_impl_dx11.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
-#include "imgui/TextEditor.h"
+#include "imgui/imgui_internal.h"
 
 // Misc
+#include "console/Console.hpp"
 #include "ini/inicpp.h"
 #include "json/json.hpp"
-#include "xorstr/xorstr.hpp"
-#include "console/Console.hpp"
 #include "proxy.h"
+#include "xorstr/xorstr.hpp"
 
 // Lua
 #include "sol/sol.hpp"
-extern "C" {
+extern "C"
+{
 #include "luajit/luajit.h"
 }
 
 // Macros
-#define TOKENPASTE(x, y) x ## y
+#define TOKENPASTE(x, y) x##y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
-#define PAD(size) char TOKENPASTE2(padding_, __LINE__) [size]
+#define PAD(size) char TOKENPASTE2(padding_, __LINE__)[size]
 #define X(str) xorstr_(str)
 
 // Usings

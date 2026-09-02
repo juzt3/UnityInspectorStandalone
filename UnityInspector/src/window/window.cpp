@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "window.h"
-#include "features/features.h"
-#include "menu/menu.h"
-#include "input.h"
 #include "config/config.h"
+#include "features/features.h"
+#include "input.h"
+#include "menu/menu.h"
 #include "themes.h"
+#include "window.h"
 
 namespace Window
 {
@@ -24,24 +24,18 @@ namespace Window
 	{
 		switch (Config::settings.theme)
 		{
-		case Theme::Light:
-			ImGui::StyleColorsLight();
-			break;
-		case Theme::Dark:
-			ImGui::StyleColorsDark();
-			break;
-		case Theme::Classic:
-			ImGui::StyleColorsClassic();
-			break;
-		case Theme::WhitePlus:
-			ImGui::StyleColorsLight();
-			Themes::SetWhitePlusTheme();
-			break;
-		case Theme::DarkPlus:
-		default:
-			ImGui::StyleColorsDark();
-			Themes::SetDarkPlusTheme();
-			break;
+			case Theme::Light: ImGui::StyleColorsLight(); break;
+			case Theme::Dark: ImGui::StyleColorsDark(); break;
+			case Theme::Classic: ImGui::StyleColorsClassic(); break;
+			case Theme::WhitePlus:
+				ImGui::StyleColorsLight();
+				Themes::SetWhitePlusTheme();
+				break;
+			case Theme::DarkPlus:
+			default:
+				ImGui::StyleColorsDark();
+				Themes::SetDarkPlusTheme();
+				break;
 		}
 	}
 
@@ -77,25 +71,48 @@ namespace Window
 			g_ImGuiInitialized = false;
 		}
 
-		if (g_pCommandList) { g_pCommandList->Release(); g_pCommandList = nullptr; }
+		if (g_pCommandList)
+		{
+			g_pCommandList->Release();
+			g_pCommandList = nullptr;
+		}
 		for (UINT i = 0; i < g_BufferCount; i++)
 		{
-			if (g_pCommandAllocators[i]) { g_pCommandAllocators[i]->Release(); g_pCommandAllocators[i] = nullptr; }
-			if (g_mainRenderTargetResource[i]) { g_mainRenderTargetResource[i]->Release(); g_mainRenderTargetResource[i] = nullptr; }
+			if (g_pCommandAllocators[i])
+			{
+				g_pCommandAllocators[i]->Release();
+				g_pCommandAllocators[i] = nullptr;
+			}
+			if (g_mainRenderTargetResource[i])
+			{
+				g_mainRenderTargetResource[i]->Release();
+				g_mainRenderTargetResource[i] = nullptr;
+			}
 		}
-		if (g_pd3d12DescriptorHeap) { g_pd3d12DescriptorHeap->Release(); g_pd3d12DescriptorHeap = nullptr; }
-		if (g_pd3d12RtvDescHeap) { g_pd3d12RtvDescHeap->Release(); g_pd3d12RtvDescHeap = nullptr; }
+		if (g_pd3d12DescriptorHeap)
+		{
+			g_pd3d12DescriptorHeap->Release();
+			g_pd3d12DescriptorHeap = nullptr;
+		}
+		if (g_pd3d12RtvDescHeap)
+		{
+			g_pd3d12RtvDescHeap->Release();
+			g_pd3d12RtvDescHeap = nullptr;
+		}
 		g_BufferCount = 0;
 		g_pd3d12Device = nullptr;
 	}
 
-	static void SrvDescriptorAllocFn(ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_desc_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_desc_handle)
+	static void SrvDescriptorAllocFn(ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_desc_handle,
+	                                 D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_desc_handle)
 	{
 		*out_cpu_desc_handle = info->SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 		*out_gpu_desc_handle = info->SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	}
 
-	static void SrvDescriptorFreeFn([[maybe_unused]] ImGui_ImplDX12_InitInfo* info,[[maybe_unused]] D3D12_CPU_DESCRIPTOR_HANDLE cpu_desc_handle,[[maybe_unused]] D3D12_GPU_DESCRIPTOR_HANDLE gpu_desc_handle)
+	static void SrvDescriptorFreeFn([[maybe_unused]] ImGui_ImplDX12_InitInfo* info,
+	                                [[maybe_unused]] D3D12_CPU_DESCRIPTOR_HANDLE cpu_desc_handle,
+	                                [[maybe_unused]] D3D12_GPU_DESCRIPTOR_HANDLE gpu_desc_handle)
 	{
 	}
 
@@ -104,8 +121,7 @@ namespace Window
 		g_pd3d12Device = device;
 
 		DXGI_SWAP_CHAIN_DESC1 desc;
-		if (FAILED(swapchain->GetDesc1(&desc)))
-			return false;
+		if (FAILED(swapchain->GetDesc1(&desc))) return false;
 
 		g_BufferCount = desc.BufferCount;
 		g_RtvFormat = desc.Format;
@@ -137,20 +153,21 @@ namespace Window
 			g_mainRenderTargetDescriptor[i] = rtvHandle;
 			rtvHandle.ptr += rtvDescriptorSize;
 
-			if (FAILED(swapchain->GetBuffer(i, IID_PPV_ARGS(&g_mainRenderTargetResource[i]))))
-				return false;
+			if (FAILED(swapchain->GetBuffer(i, IID_PPV_ARGS(&g_mainRenderTargetResource[i])))) return false;
 
-			g_pd3d12Device->CreateRenderTargetView(g_mainRenderTargetResource[i], nullptr, g_mainRenderTargetDescriptor[i]);
+			g_pd3d12Device->CreateRenderTargetView(g_mainRenderTargetResource[i], nullptr,
+			                                       g_mainRenderTargetDescriptor[i]);
 
-			if (FAILED(g_pd3d12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&g_pCommandAllocators[i]))))
+			if (FAILED(g_pd3d12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
+			                                                  IID_PPV_ARGS(&g_pCommandAllocators[i]))))
 				return false;
 		}
 
-		if (FAILED(g_pd3d12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_pCommandAllocators[0], nullptr, IID_PPV_ARGS(&g_pCommandList))))
+		if (FAILED(g_pd3d12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_pCommandAllocators[0],
+		                                             nullptr, IID_PPV_ARGS(&g_pCommandList))))
 			return false;
 
-		if (FAILED(g_pCommandList->Close()))
-			return false;
+		if (FAILED(g_pCommandList->Close())) return false;
 
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
@@ -218,7 +235,7 @@ namespace Window
 
 		g_pCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
 
-		ID3D12DescriptorHeap* heaps[] = { g_pd3d12DescriptorHeap };
+		ID3D12DescriptorHeap* heaps[] = {g_pd3d12DescriptorHeap};
 		g_pCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
 		ImGui_ImplDX12_NewFrame();
@@ -238,7 +255,7 @@ namespace Window
 
 		SUCCEEDED(g_pCommandList->Close());
 
-		ID3D12CommandList* const commandLists[] = { g_pCommandList };
+		ID3D12CommandList* const commandLists[] = {g_pCommandList};
 		graphics_hook::GH::GetCommandQueue()->ExecuteCommandLists(1, commandLists);
 	}
 
@@ -322,31 +339,29 @@ namespace Window
 		{
 			ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 
-			if (Input::ProcessMessage(uMsg, wParam))
-				return 2;
+			if (Input::ProcessMessage(uMsg, wParam)) return 2;
 
 			if (ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureMouseUnlessPopupClose)
 			{
 				switch (uMsg)
 				{
-				case WM_LBUTTONDOWN:
-				case WM_LBUTTONUP:
-				case WM_RBUTTONDOWN:
-				case WM_RBUTTONUP:
-				case WM_MBUTTONDOWN:
-				case WM_MBUTTONUP:
-				case WM_XBUTTONDOWN:
-				case WM_XBUTTONUP:
-				case WM_MOUSEWHEEL:
-				case WM_MOUSEMOVE:
-				case WM_MOUSELEAVE:
-				case WM_MOUSEACTIVATE:
-				case WM_MOUSEHOVER:
-				case WM_MOUSELAST:
-				case WM_NCMOUSEHOVER:
-				case WM_NCMOUSELEAVE:
-				case WM_NCMOUSEMOVE:
-					return 2;
+					case WM_LBUTTONDOWN:
+					case WM_LBUTTONUP:
+					case WM_RBUTTONDOWN:
+					case WM_RBUTTONUP:
+					case WM_MBUTTONDOWN:
+					case WM_MBUTTONUP:
+					case WM_XBUTTONDOWN:
+					case WM_XBUTTONUP:
+					case WM_MOUSEWHEEL:
+					case WM_MOUSEMOVE:
+					case WM_MOUSELEAVE:
+					case WM_MOUSEACTIVATE:
+					case WM_MOUSEHOVER:
+					case WM_MOUSELAST:
+					case WM_NCMOUSEHOVER:
+					case WM_NCMOUSELEAVE:
+					case WM_NCMOUSEMOVE: return 2;
 				}
 			}
 		}

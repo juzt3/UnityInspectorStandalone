@@ -5,10 +5,8 @@ REGISTER_FEATURE(Tests)
 
 void Tests::Update(float)
 {
-
 }
 
 void Tests::Render()
 {
-
 }

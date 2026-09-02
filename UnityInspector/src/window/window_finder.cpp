@@ -46,7 +46,9 @@ namespace WindowFinder
 		RECT rect;
 		GetWindowRect(hwnd, &rect);
 
-		if (constexpr int MIN_WINDOW_SIZE = 100; (rect.right - rect.left) < MIN_WINDOW_SIZE || (rect.bottom - rect.top) < MIN_WINDOW_SIZE) return false;
+		if (constexpr int MIN_WINDOW_SIZE = 100;
+		    (rect.right - rect.left) < MIN_WINDOW_SIZE || (rect.bottom - rect.top) < MIN_WINDOW_SIZE)
+			return false;
 
 		return true;
 	}
