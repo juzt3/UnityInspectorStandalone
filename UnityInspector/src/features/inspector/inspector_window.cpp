@@ -2153,6 +2153,10 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 
 						int lastIndex = 0;
 						Helper::SafeReadInt(collectionPtr, 0x24, lastIndex);
+						uint64_t slotCapacity = 0;
+						if (!Helper::SafeReadUInt64(arrayDataStart, 0x18, slotCapacity)) slotCapacity = 0;
+						lastIndex = std::clamp(lastIndex, 0,
+						                           static_cast<int>(std::min<uint64_t>(slotCapacity, 10000)));
 
 						int displayIndex = 0;
 						for (int i = 0; i < lastIndex && displayIndex < collectionCount; ++i)

@@ -50,15 +50,14 @@ namespace
 	}
 }
 
-MemoryScanner::~MemoryScanner()
-{
-	stopRequested = true;
-	if (scanThread.joinable()) scanThread.join();
-}
-
 void MemoryScanner::Update(float deltaTime)
 {
 	(void)deltaTime;
+	if (pendingWrite)
+	{
+		WriteFieldValue(pendingWrite->field, &pendingWrite->value);
+		pendingWrite.reset();
+	}
 
 	if (pendingOperation != ScanOperation::None && !scanInProgress)
 	{
@@ -71,9 +70,6 @@ void MemoryScanner::Update(float deltaTime)
 		{
 			scanInProgress = true;
 			stopRequested = false;
-
-			if (scanThread.joinable()) scanThread.join();
-
 			const ScanOperation op = pendingOperation;
 			pendingOperation = ScanOperation::None;
 
@@ -83,33 +79,23 @@ void MemoryScanner::Update(float deltaTime)
 				objectsGathered = GatherUnityObjects();
 			}
 
-			scanThread = std::thread(
-			    [this, op]
-			    {
-				    try
-				    {
-					    UR::ThreadAttach();
-
-					    if (op == ScanOperation::FirstScan)
-					    {
-						    PerformFirstScan();
-					    }
-					    else if (op == ScanOperation::NextScan)
-					    {
-						    PerformNextScan();
-					    }
-				    }
-				    catch (const std::exception& e)
-				    {
-					    statusText = std::string("Scan error: ") + e.what();
-					    scanInProgress = false;
-				    }
-				    catch (...)
-				    {
-					    statusText = "Scan error: unknown exception";
-					    scanInProgress = false;
-				    }
-			    });
+			try
+			{
+				if (op == ScanOperation::FirstScan)
+					PerformFirstScan();
+				else if (op == ScanOperation::NextScan)
+					PerformNextScan();
+			}
+			catch (const std::exception& e)
+			{
+				statusText = std::string("Scan error: ") + e.what();
+				scanInProgress = false;
+			}
+			catch (...)
+			{
+				statusText = "Scan error: unknown exception";
+				scanInProgress = false;
+			}
 		}
 	}
 }
@@ -403,8 +389,8 @@ void MemoryScanner::Render()
 			ImGui::SameLine();
 			if (ImGui::Button("Write Value", ImVec2(100, 0)) || valueChanged)
 			{
-				if (WriteFieldValue(result, &editValue))
-					memcpy(&currentResults[selectedResultIndex].lastValue, &editValue, sizeof(double));
+				pendingWrite = PendingWrite{result, editValue};
+				memcpy(&currentResults[selectedResultIndex].lastValue, &editValue, sizeof(double));
 			}
 		}
 	}

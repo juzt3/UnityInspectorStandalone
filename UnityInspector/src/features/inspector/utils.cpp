@@ -286,8 +286,9 @@ std::string Inspector::BuildObjectPath(UT::Transform* transform) const
 
 	std::vector<std::string> pathParts;
 	UT::Transform* current = transform;
+	std::unordered_set<UT::Transform*> visited;
 
-	while (current && Helper::SafeIsAlive(current))
+	while (current && pathParts.size() < 256 && visited.insert(current).second && Helper::SafeIsAlive(current))
 	{
 		UT::GameObject* go = nullptr;
 		if (!Helper::SafeGetGameObject(current, go) || !go) break;
@@ -314,8 +315,12 @@ std::string Inspector::BuildObjectPath(UT::Transform* transform) const
 	return path;
 }
 
-void Inspector::BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform)
+void Inspector::BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform,
+	                               std::unordered_set<UT::Transform*>& visited, const size_t depth,
+	                               size_t& nodeBudget)
 {
+	if (depth >= 256 || nodeBudget == 0 || !transform || !visited.insert(transform).second) return;
+	--nodeBudget;
 	if (!Helper::SafeIsAlive(transform)) return;
 
 	node.transform = transform;
@@ -347,12 +352,13 @@ void Inspector::BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform
 	int childCount = 0;
 	if (!Helper::SafeGetChildCount(transform, childCount)) return;
 
-	for (int i = 0; i < childCount; i++)
+	if (childCount < 0) return;
+	for (int i = 0; i < childCount && nodeBudget > 0; i++)
 	{
 		if (UT::Transform* child = nullptr; Helper::SafeGetChild(transform, i, child) && child)
 		{
 			HierarchyNode childNode;
-			BuildHierarchyNode(childNode, child);
+			BuildHierarchyNode(childNode, child, visited, depth + 1, nodeBudget);
 			if (childNode.gameObject)
 			{
 				node.children.push_back(std::move(childNode));
@@ -377,6 +383,8 @@ void Inspector::RefreshHierarchy()
 		if (transforms.empty()) return;
 	}
 
+	std::unordered_set<UT::Transform*> visited;
+	size_t nodeBudget = transforms.size();
 	for (const auto& t : transforms)
 	{
 		if (!Helper::SafeIsAlive(t)) continue;
@@ -387,7 +395,7 @@ void Inspector::RefreshHierarchy()
 		if (!parent)
 		{
 			HierarchyNode node;
-			BuildHierarchyNode(node, t);
+			BuildHierarchyNode(node, t, visited, 0, nodeBudget);
 			if (node.gameObject)
 			{
 				rootNodes.push_back(std::move(node));

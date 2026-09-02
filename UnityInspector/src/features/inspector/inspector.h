@@ -124,7 +124,8 @@ private:
 	std::unique_ptr<FieldEditor> fieldEditor;
 
 	void RefreshHierarchy();
-	void BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform);
+	void BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform,
+	                        std::unordered_set<UT::Transform*>& visited, size_t depth, size_t& nodeBudget);
 	void RenderHierarchyNode(HierarchyNode& node, std::string_view lowerSearch = "", int depth = 0);
 	bool NodeMatchesSearch(const HierarchyNode& node, std::string_view lowerSearch) const;
 	void SetAllNodesExpanded(std::vector<HierarchyNode>& nodes, bool expanded);

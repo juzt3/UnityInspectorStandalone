@@ -242,7 +242,6 @@ namespace Window
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		Features::Update(ImGui::GetIO().DeltaTime);
 		Menu::Render();
 		Features::Render();
 
@@ -281,7 +280,6 @@ namespace Window
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		Features::Update(ImGui::GetIO().DeltaTime);
 		Menu::Render();
 		Features::Render();
 

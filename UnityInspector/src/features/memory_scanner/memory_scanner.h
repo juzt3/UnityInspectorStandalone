@@ -67,7 +67,6 @@ class MemoryScanner final : public IFeature
 public:
 	void Update(float deltaTime) override;
 	void Render() override;
-	~MemoryScanner() override;
 
 private:
 	enum class ScanOperation
@@ -166,8 +165,13 @@ private:
 	std::vector<void*> objectsGathered;
 
 	ScanField::ValUnion editValue{.i64 = 0};
+	struct PendingWrite
+	{
+		ScanField field;
+		ScanField::ValUnion value;
+	};
+	std::optional<PendingWrite> pendingWrite;
 
-	std::thread scanThread;
 	std::mutex resultsMutex;
 	std::atomic<bool> stopRequested{false};
 };
