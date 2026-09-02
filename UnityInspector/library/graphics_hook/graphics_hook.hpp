@@ -9,7 +9,7 @@
 
 #include "kiero.hpp"
 #include "kiero.generated.hpp"
-#include "detours/HookManager.h"
+#include "safetyhook/HookManager.h"
 #include "console/Console.hpp"
 
 #pragma comment(lib, "d3d11.lib")

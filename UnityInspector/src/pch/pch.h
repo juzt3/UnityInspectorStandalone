@@ -52,7 +52,7 @@
 #include "unityresolve/UnityResolve.hpp"
 
 // Hook
-#include "detours/HookManager.h"
+#include "safetyhook/HookManager.h"
 #include "graphics_hook/graphics_hook.hpp"
 
 // ImGui
