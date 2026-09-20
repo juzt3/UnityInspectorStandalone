@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
-#include "inspector.h"
 #include "helper/helper.h"
+#include "inspector.h"
 
 void Inspector::DrawSelectedObjectBoundingBox() const
 {

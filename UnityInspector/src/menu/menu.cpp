@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "menu.h"
-#include "misc_tab/misc_tab.h"
+#include "config/config.h"
 #include "debug_tab/debug_tab.h"
 #include "lua_tab/lua_tab.h"
-#include "config/config.h"
+#include "menu.h"
+#include "misc_tab/misc_tab.h"
 
 namespace Menu
 {
@@ -21,10 +21,7 @@ namespace Menu
 		std::string responseData;
 		HINTERNET hSession = nullptr, hConnect = nullptr, hRequest = nullptr;
 
-		hSession = WinHttpOpen(L"UnityInspectorStandalone/1.0",
-		                       WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-		                       nullptr,
-		                       nullptr, 0);
+		hSession = WinHttpOpen(L"UnityInspectorStandalone/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, nullptr, nullptr, 0);
 		if (!hSession)
 		{
 			outError = "WinHttpOpen failed: " + std::to_string(GetLastError());
@@ -42,9 +39,7 @@ namespace Menu
 		}
 
 		hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/repos/PicoShot/UnityInspectorStandalone/releases/latest",
-		                              nullptr, nullptr,
-		                              nullptr,
-		                              WINHTTP_FLAG_SECURE);
+		                              nullptr, nullptr, nullptr, WINHTTP_FLAG_SECURE);
 		if (!hRequest)
 		{
 			outError = "WinHttpOpenRequest failed: " + std::to_string(GetLastError());
@@ -53,10 +48,7 @@ namespace Menu
 			return "";
 		}
 
-		BOOL bResults = WinHttpSendRequest(hRequest,
-		                                   nullptr, 0,
-		                                   nullptr, 0,
-		                                   0, 0);
+		BOOL bResults = WinHttpSendRequest(hRequest, nullptr, 0, nullptr, 0, 0, 0);
 
 		if (!bResults)
 		{
@@ -92,8 +84,7 @@ namespace Menu
 					break;
 				}
 				responseData.append(tempBuffer.data(), dwDownloaded);
-			}
-			while (dwSize > 0);
+			} while (dwSize > 0);
 		}
 
 		if (hRequest) WinHttpCloseHandle(hRequest);
@@ -152,45 +143,47 @@ namespace Menu
 		s_Tabs.push_back(std::make_unique<MiscTab>());
 		s_Initialized = true;
 
-		std::thread([]
-		{
-			std::string err;
-			std::string jsonStr = FetchLatestReleaseJson(err);
-			if (!err.empty())
-			{
-				s_UpdateError = err;
-				s_UpdateCheckFinished = true;
-				return;
-			}
+		std::thread(
+		    []
+		    {
+			    std::string err;
+			    std::string jsonStr = FetchLatestReleaseJson(err);
+			    if (!err.empty())
+			    {
+				    s_UpdateError = err;
+				    s_UpdateCheckFinished = true;
+				    return;
+			    }
 
-			try
-			{
-				if (Json json = Json::parse(jsonStr); json.contains("tag_name") && json["tag_name"].is_string())
-				{
-					std::string latestTag = json["tag_name"];
-					s_LatestVersion = latestTag;
+			    try
+			    {
+				    if (Json json = Json::parse(jsonStr); json.contains("tag_name") && json["tag_name"].is_string())
+				    {
+					    std::string latestTag = json["tag_name"];
+					    s_LatestVersion = latestTag;
 
-					if (json.contains("html_url") && json["html_url"].is_string())
-					{
-						s_ReleaseUrl = json["html_url"];
-					}
-					else
-					{
-						s_ReleaseUrl = "https://github.com/PicoShot/UnityInspectorStandalone/releases";
-					}
+					    if (json.contains("html_url") && json["html_url"].is_string())
+					    {
+						    s_ReleaseUrl = json["html_url"];
+					    }
+					    else
+					    {
+						    s_ReleaseUrl = "https://github.com/PicoShot/UnityInspectorStandalone/releases";
+					    }
 
-					if (IsNewerVersion(latestTag, VERSION))
-					{
-						s_HasUpdate = true;
-					}
-				}
-			}
-			catch (const std::exception& e)
-			{
-				s_UpdateError = std::string("JSON parse error: ") + e.what();
-			}
-			s_UpdateCheckFinished = true;
-		}).detach();
+					    if (IsNewerVersion(latestTag, VERSION))
+					    {
+						    s_HasUpdate = true;
+					    }
+				    }
+			    }
+			    catch (const std::exception& e)
+			    {
+				    s_UpdateError = std::string("JSON parse error: ") + e.what();
+			    }
+			    s_UpdateCheckFinished = true;
+		    })
+		    .detach();
 	}
 
 	void Render()

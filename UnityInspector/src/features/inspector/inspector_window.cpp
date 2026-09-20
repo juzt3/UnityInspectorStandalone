@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "inspector.h"
 #include "helper/helper.h"
+#include "inspector.h"
 
 #define API(fn) (Config::state.unityMode == UnityResolve::Mode::Mono ? "mono_" fn : "il2cpp_" fn)
 
@@ -121,16 +121,14 @@ static void SectionLabel(const char* text, size_t count)
 static std::string SimplifyTypeName(std::string_view typeName)
 {
 	static const std::unordered_map<std::string_view, std::string_view> primitiveMap = {
-		{"System.Int32", "int"}, {"System.Single", "float"}, {"System.Boolean", "bool"},
-		{"System.Double", "double"}, {"System.String", "string"}, {"System.Int64", "long"},
-		{"System.Int16", "short"}, {"System.Byte", "byte"}, {"System.UInt32", "uint"},
-		{"System.UInt64", "ulong"}, {"System.UInt16", "ushort"}, {"System.SByte", "sbyte"},
-		{"System.Char", "char"}, {"System.Void", "void"}, {"System.Object", "object"},
-		{"System.Decimal", "decimal"}, {"System.IntPtr", "IntPtr"}, {"System.UIntPtr", "UIntPtr"}
-	};
+	    {"System.Int32", "int"},       {"System.Single", "float"},  {"System.Boolean", "bool"},
+	    {"System.Double", "double"},   {"System.String", "string"}, {"System.Int64", "long"},
+	    {"System.Int16", "short"},     {"System.Byte", "byte"},     {"System.UInt32", "uint"},
+	    {"System.UInt64", "ulong"},    {"System.UInt16", "ushort"}, {"System.SByte", "sbyte"},
+	    {"System.Char", "char"},       {"System.Void", "void"},     {"System.Object", "object"},
+	    {"System.Decimal", "decimal"}, {"System.IntPtr", "IntPtr"}, {"System.UIntPtr", "UIntPtr"}};
 
-	if (auto it = primitiveMap.find(typeName); it != primitiveMap.end())
-		return std::string(it->second);
+	if (auto it = primitiveMap.find(typeName); it != primitiveMap.end()) return std::string(it->second);
 
 	std::string result(typeName);
 
@@ -146,13 +144,17 @@ static std::string SimplifyTypeName(std::string_view typeName)
 			int depth = 0;
 			for (size_t i = 0; i <= innerPart.size(); ++i)
 			{
-				if (i < innerPart.size() && innerPart[i] == '<') ++depth;
-				else if (i < innerPart.size() && innerPart[i] == '>') --depth;
+				if (i < innerPart.size() && innerPart[i] == '<')
+					++depth;
+				else if (i < innerPart.size() && innerPart[i] == '>')
+					--depth;
 				else if ((i == innerPart.size() || innerPart[i] == ',') && depth == 0)
 				{
 					std::string token = innerPart.substr(start, i - start);
-					while (!token.empty() && token[0] == ' ') token.erase(token.begin());
-					while (!token.empty() && token.back() == ' ') token.pop_back();
+					while (!token.empty() && token[0] == ' ')
+						token.erase(token.begin());
+					while (!token.empty() && token.back() == ' ')
+						token.pop_back();
 					if (!simplifiedInner.empty()) simplifiedInner += ", ";
 					simplifiedInner += SimplifyTypeName(token);
 					start = i + 1;
@@ -169,8 +171,7 @@ static std::string SimplifyTypeName(std::string_view typeName)
 		}
 	}
 
-	if (size_t lastDot = result.rfind('.'); lastDot != std::string::npos)
-		return result.substr(lastDot + 1);
+	if (size_t lastDot = result.rfind('.'); lastDot != std::string::npos) return result.substr(lastDot + 1);
 
 	return result;
 }
@@ -207,7 +208,7 @@ static bool SafeReadDecimal(void* addr, double& outValue)
 		const int64_t mid = static_cast<uint32_t>(parts[3]);
 		const int64_t hi = static_cast<uint32_t>(parts[1]);
 		const double unscaled = static_cast<double>(lo) + static_cast<double>(mid) * 4294967296.0 +
-			static_cast<double>(hi) * 18446744073709551616.0;
+		                        static_cast<double>(hi) * 18446744073709551616.0;
 		outValue = unscaled / std::pow(10.0, scale) * (negative ? -1.0 : 1.0);
 		return true;
 	}
@@ -239,8 +240,8 @@ static bool IsDefinitelyValueType(std::string_view typeName)
 	if (typeName == "System.Decimal") return true;
 	if (IsUInt64WrappingType(typeName)) return true;
 	if (typeName.starts_with("System.")) return true;
-	if (typeName.starts_with("UnityEngine.Vector") || typeName == "UnityEngine.Quaternion" || typeName ==
-		"UnityEngine.Color")
+	if (typeName.starts_with("UnityEngine.Vector") || typeName == "UnityEngine.Quaternion" ||
+	    typeName == "UnityEngine.Color")
 		return true;
 	return false;
 }
@@ -267,8 +268,10 @@ static bool ParseDictionaryTypes(std::string_view typeName, std::string& outKeyT
 	size_t commaPos = std::string_view::npos;
 	for (size_t i = 0; i < inner.size(); ++i)
 	{
-		if (inner[i] == '<' || inner[i] == '[') depth++;
-		else if (inner[i] == '>' || inner[i] == ']') depth--;
+		if (inner[i] == '<' || inner[i] == '[')
+			depth++;
+		else if (inner[i] == '>' || inner[i] == ']')
+			depth--;
 		else if (inner[i] == ',' && depth == 0)
 		{
 			commaPos = i;
@@ -283,8 +286,10 @@ static bool ParseDictionaryTypes(std::string_view typeName, std::string& outKeyT
 
 	auto trim = [](std::string& s)
 	{
-		while (!s.empty() && s[0] == ' ') s.erase(s.begin());
-		while (!s.empty() && s.back() == ' ') s.pop_back();
+		while (!s.empty() && s[0] == ' ')
+			s.erase(s.begin());
+		while (!s.empty() && s.back() == ' ')
+			s.pop_back();
 	};
 	trim(outKeyType);
 	trim(outValueType);
@@ -307,7 +312,7 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 	{
 		switch (field.editableType)
 		{
-		case EditableType::Int:
+			case EditableType::Int:
 			{
 				if (field.typeName == "System.Int64")
 				{
@@ -317,7 +322,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_S64, &val))
 							Helper::SafeSetStaticFieldInt64(field.fieldHandle, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.UInt64")
 				{
@@ -327,7 +335,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_U64, &val))
 							Helper::SafeSetStaticFieldUInt64(field.fieldHandle, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.Byte")
 				{
@@ -337,7 +348,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeSetStaticFieldByte(field.fieldHandle, static_cast<uint8_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.SByte")
 				{
@@ -347,7 +361,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeSetStaticFieldSByte(field.fieldHandle, static_cast<int8_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.Int16" || field.typeName == "System.Short")
 				{
@@ -357,7 +374,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeSetStaticFieldInt16(field.fieldHandle, static_cast<int16_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.UInt16" || field.typeName == "System.UShort")
 				{
@@ -367,7 +387,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeSetStaticFieldUInt16(field.fieldHandle, static_cast<uint16_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.Char")
 				{
@@ -382,7 +405,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						else
 							ImGui::Text("'\\u%04X'", static_cast<int>(val));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.IntPtr")
 				{
@@ -391,7 +417,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_S64, &val))
 							Helper::SafeSetStaticFieldInt64(field.fieldHandle, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.UIntPtr")
 				{
@@ -400,7 +429,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_U64, &val))
 							Helper::SafeSetStaticFieldUInt64(field.fieldHandle, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (IsUInt64WrappingType(field.typeName))
 				{
@@ -409,39 +441,48 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_U64, &val))
 							Helper::SafeSetStaticFieldUInt64(field.fieldHandle, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else
 				{
 					int val;
 					if (Helper::SafeGetStaticFieldInt(field.fieldHandle, val))
 					{
-						if (ImGui::DragInt("##val", &val))
-							Helper::SafeSetStaticFieldInt(field.fieldHandle, val);
+						if (ImGui::DragInt("##val", &val)) Helper::SafeSetStaticFieldInt(field.fieldHandle, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				break;
 			}
-		case EditableType::Float:
+			case EditableType::Float:
 			{
 				float val;
 				if (Helper::SafeGetStaticFieldFloat(field.fieldHandle, val))
 				{
-					if (ImGui::DragFloat("##val", &val, 0.1f))
-						Helper::SafeSetStaticFieldFloat(field.fieldHandle, val);
+					if (ImGui::DragFloat("##val", &val, 0.1f)) Helper::SafeSetStaticFieldFloat(field.fieldHandle, val);
 				}
-			else { ImGui::TextDisabled("ERROR"); }
-			break;
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
+				break;
 			}
-		case EditableType::Decimal:
+			case EditableType::Decimal:
 			{
 				int32_t parts[4] = {};
 				if (Config::state.unityMode == UnityResolve::Mode::Mono)
 				{
-					void* vTable = UR::Invoke<void*, void*, void*>("mono_class_vtable", UR::pDomain,
-						UR::Invoke<void*, void*>("mono_field_get_parent", field.fieldHandle));
-					UR::Invoke<void, void*, void*, void*>("mono_field_static_get_value", vTable, field.fieldHandle, &parts);
+					void* vTable = UR::Invoke<void*, void*, void*>(
+					    "mono_class_vtable", UR::pDomain,
+					    UR::Invoke<void*, void*>("mono_field_get_parent", field.fieldHandle));
+					UR::Invoke<void, void*, void*, void*>("mono_field_static_get_value", vTable, field.fieldHandle,
+					                                      &parts);
 				}
 				else
 				{
@@ -453,12 +494,12 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 				const int64_t mid = static_cast<uint32_t>(parts[3]);
 				const int64_t hi = static_cast<uint32_t>(parts[1]);
 				const double unscaled = static_cast<double>(lo) + static_cast<double>(mid) * 4294967296.0 +
-					static_cast<double>(hi) * 18446744073709551616.0;
+				                        static_cast<double>(hi) * 18446744073709551616.0;
 				const double value = unscaled / std::pow(10.0, scale) * (negative ? -1.0 : 1.0);
 				ImGui::TextDisabled("[Decimal] %.6f", value);
 				break;
 			}
-		case EditableType::Vector2:
+			case EditableType::Vector2:
 			{
 				if (UT::Vector2 val; Helper::SafeGetStaticFieldVector2(field.fieldHandle, val))
 				{
@@ -470,10 +511,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeSetStaticFieldVector2(field.fieldHandle, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Vector4:
+			case EditableType::Vector4:
 			{
 				if (UT::Vector4 val; Helper::SafeGetStaticFieldVector4(field.fieldHandle, val))
 				{
@@ -487,10 +531,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeSetStaticFieldVector4(field.fieldHandle, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Quaternion:
+			case EditableType::Quaternion:
 			{
 				if (UT::Quaternion val; Helper::SafeGetStaticFieldQuaternion(field.fieldHandle, val))
 				{
@@ -504,10 +551,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeSetStaticFieldQuaternion(field.fieldHandle, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Color:
+			case EditableType::Color:
 			{
 				if (UT::Color val; Helper::SafeGetStaticFieldColor(field.fieldHandle, val))
 				{
@@ -521,10 +571,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeSetStaticFieldColor(field.fieldHandle, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::String:
+			case EditableType::String:
 			{
 				if (void* strPtrRaw = nullptr; Helper::SafeGetStaticFieldPointer(field.fieldHandle, strPtrRaw))
 				{
@@ -532,10 +585,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 					const std::string currentStr = strPtr ? strPtr->ToString() : "(null)";
 					ImGui::TextDisabled("\"%s\"", currentStr.c_str());
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Enum:
+			case EditableType::Enum:
 			{
 				if (int val; Helper::SafeGetStaticFieldInt(field.fieldHandle, val))
 				{
@@ -575,8 +631,8 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						}
 
 						const char* previewLabel = currentIdx >= 0 && currentIdx < static_cast<int>(enumVals.size())
-							                           ? enumVals[currentIdx].first.c_str()
-							                           : "Unknown";
+						                               ? enumVals[currentIdx].first.c_str()
+						                               : "Unknown";
 
 						if (ImGui::BeginCombo("##val", previewLabel, 0))
 						{
@@ -591,8 +647,7 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 										Helper::SafeSetStaticFieldInt(field.fieldHandle, enumVals[i].second);
 									}
 								}
-								if (isSelected)
-									ImGui::SetItemDefaultFocus();
+								if (isSelected) ImGui::SetItemDefaultFocus();
 								ImGui::PopID();
 							}
 							ImGui::EndCombo();
@@ -601,10 +656,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						ImGui::Text("%d", val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::CustomObject:
+			case EditableType::CustomObject:
 			{
 				if (field.isValueType)
 				{
@@ -614,8 +672,8 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 				{
 					bool isValid = false;
 					void* instancePtr = nullptr;
-					isValid = Helper::SafeGetStaticFieldPointer(field.fieldHandle, instancePtr) && instancePtr !=
-						nullptr;
+					isValid =
+					    Helper::SafeGetStaticFieldPointer(field.fieldHandle, instancePtr) && instancePtr != nullptr;
 
 					if (!isValid)
 					{
@@ -639,7 +697,7 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 
 								nextTarget.cachedComponentFields.push_back(GetObjectFields(instancePtr, nullptr));
 								nextTarget.cachedComponentProperties.push_back(
-									GetObjectProperties(instancePtr, nullptr));
+								    GetObjectProperties(instancePtr, nullptr));
 								nextTarget.cachedComponentMethods.push_back(GetObjectMethods(instancePtr, nullptr));
 
 								activeTab->navigationStack.push_back(std::move(nextTarget));
@@ -649,16 +707,14 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 				}
 				break;
 			}
-		default:
-			ImGui::TextDisabled("[static]");
-			break;
+			default: ImGui::TextDisabled("[static]"); break;
 		}
 	}
 	else
 	{
 		switch (field.editableType)
 		{
-		case EditableType::Int:
+			case EditableType::Int:
 			{
 				if (field.typeName == "System.Int64")
 				{
@@ -668,7 +724,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_S64, &val))
 							Helper::SafeWriteInt64(instance, field.offset, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.UInt64")
 				{
@@ -678,7 +737,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_U64, &val))
 							Helper::SafeWriteUInt64(instance, field.offset, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.Byte")
 				{
@@ -688,7 +750,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeWriteByte(instance, field.offset, static_cast<uint8_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.SByte")
 				{
@@ -698,7 +763,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeWriteSByte(instance, field.offset, static_cast<int8_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.Int16" || field.typeName == "System.Short")
 				{
@@ -708,7 +776,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeWriteInt16(instance, field.offset, static_cast<int16_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.UInt16" || field.typeName == "System.UShort")
 				{
@@ -718,7 +789,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::DragInt("##val", &iv))
 							Helper::SafeWriteUInt16(instance, field.offset, static_cast<uint16_t>(iv));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.Char")
 				{
@@ -733,7 +807,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						else
 							ImGui::Text("'\\u%04X'", static_cast<int>(val));
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.IntPtr")
 				{
@@ -742,7 +819,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_S64, &val))
 							Helper::SafeWriteInt64(instance, field.offset, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (field.typeName == "System.UIntPtr")
 				{
@@ -751,7 +831,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_U64, &val))
 							Helper::SafeWriteUInt64(instance, field.offset, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else if (IsUInt64WrappingType(field.typeName))
 				{
@@ -760,7 +843,10 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						if (ImGui::InputScalar("##val", ImGuiDataType_U64, &val))
 							Helper::SafeWriteUInt64(instance, field.offset, val);
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				else
 				{
@@ -769,8 +855,7 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 					{
 						if (field.enumTypeName.empty())
 						{
-							if (ImGui::DragInt("##val", &val))
-								Helper::SafeWriteInt(instance, field.offset, val);
+							if (ImGui::DragInt("##val", &val)) Helper::SafeWriteInt(instance, field.offset, val);
 						}
 						else
 						{
@@ -785,7 +870,8 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 								}
 							}
 							std::vector<const char*> names;
-							for (const auto& key : enumVals | std::views::keys) names.push_back(key.c_str());
+							for (const auto& key : enumVals | std::views::keys)
+								names.push_back(key.c_str());
 							if (ImGui::Combo("##val", &currentIdx, names.data(), static_cast<int>(names.size())))
 							{
 								Helper::SafeWriteInt(instance, field.offset, enumVals[currentIdx].second);
@@ -794,33 +880,40 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 							ImGui::Text("%d", val);
 						}
 					}
-					else { ImGui::TextDisabled("ERROR"); }
+					else
+					{
+						ImGui::TextDisabled("ERROR");
+					}
 				}
 				break;
 			}
-		case EditableType::Float:
+			case EditableType::Float:
 			{
 				float val;
 				if (Helper::SafeReadFloat(instance, field.offset, val))
 				{
-					if (ImGui::DragFloat("##val", &val, 0.1f))
-						Helper::SafeWriteFloat(instance, field.offset, val);
+					if (ImGui::DragFloat("##val", &val, 0.1f)) Helper::SafeWriteFloat(instance, field.offset, val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Double:
+			case EditableType::Double:
 			{
 				if (double val; Helper::SafeReadDouble(instance, field.offset, val))
 				{
 					float fVal = static_cast<float>(val);
-					if (ImGui::DragFloat("##val", &fVal, 0.01f))
-						Helper::SafeWriteDouble(instance, field.offset, fVal);
+					if (ImGui::DragFloat("##val", &fVal, 0.01f)) Helper::SafeWriteDouble(instance, field.offset, fVal);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Decimal:
+			case EditableType::Decimal:
 			{
 				const auto addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + field.offset);
 				if (double value; SafeReadDecimal(addr, value))
@@ -829,28 +922,33 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 					ImGui::TextDisabled("ERROR");
 				break;
 			}
-		case EditableType::Bool:
+			case EditableType::Bool:
 			{
 				bool val;
 				if (Helper::SafeReadBool(instance, field.offset, val))
 				{
-					if (ImGui::Checkbox("##val", &val))
-						Helper::SafeWriteBool(instance, field.offset, val);
+					if (ImGui::Checkbox("##val", &val)) Helper::SafeWriteBool(instance, field.offset, val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::String:
+			case EditableType::String:
 			{
 				if (UT::String* strPtr = nullptr; Helper::SafeReadStringPtr(instance, field.offset, strPtr))
 				{
 					const std::string currentStr = strPtr ? strPtr->ToString() : "(null)";
 					ImGui::TextDisabled("\"%s\"", currentStr.c_str());
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Vector2:
+			case EditableType::Vector2:
 			{
 				if (UT::Vector2 val; Helper::SafeReadVector2(instance, field.offset, val))
 				{
@@ -862,10 +960,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeWriteVector2(instance, field.offset, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Vector3:
+			case EditableType::Vector3:
 			{
 				if (UT::Vector3 val; Helper::SafeReadVector3(instance, field.offset, val))
 				{
@@ -878,10 +979,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeWriteVector3(instance, field.offset, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Vector4:
+			case EditableType::Vector4:
 			{
 				if (UT::Vector4 val; Helper::SafeReadVector4(instance, field.offset, val))
 				{
@@ -895,10 +999,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeWriteVector4(instance, field.offset, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Quaternion:
+			case EditableType::Quaternion:
 			{
 				if (UT::Quaternion val; Helper::SafeReadQuaternion(instance, field.offset, val))
 				{
@@ -912,10 +1019,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeWriteQuaternion(instance, field.offset, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Color:
+			case EditableType::Color:
 			{
 				if (UT::Color val; Helper::SafeReadColor(instance, field.offset, val))
 				{
@@ -929,10 +1039,13 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 						Helper::SafeWriteColor(instance, field.offset, val);
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::Enum:
+			case EditableType::Enum:
 			{
 				if (int val; Helper::SafeReadInt(instance, field.offset, val))
 				{
@@ -949,8 +1062,8 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 					}
 
 					const char* previewLabel = currentIdx >= 0 && currentIdx < static_cast<int>(enumVals.size())
-						                           ? enumVals[currentIdx].first.c_str()
-						                           : "Unknown";
+					                               ? enumVals[currentIdx].first.c_str()
+					                               : "Unknown";
 
 					if (ImGui::BeginCombo("##val", previewLabel, 0))
 					{
@@ -965,20 +1078,22 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 									Helper::SafeWriteInt(instance, field.offset, enumVals[i].second);
 								}
 							}
-							if (isSelected)
-								ImGui::SetItemDefaultFocus();
+							if (isSelected) ImGui::SetItemDefaultFocus();
 							ImGui::PopID();
 						}
 						ImGui::EndCombo();
 					}
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 				break;
 			}
-		case EditableType::CustomObject:
+			case EditableType::CustomObject:
 			{
-				if (bool isNullable = field.typeName.find("System.Nullable") != std::string::npos; isNullable && field.
-					isValueType)
+				if (bool isNullable = field.typeName.find("System.Nullable") != std::string::npos;
+				    isNullable && field.isValueType)
 				{
 					auto nullablePtr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + field.offset);
 					bool hasValue = false;
@@ -1002,11 +1117,11 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 								nextTarget.cachedComponents.push_back(static_cast<UT::Component*>(nullablePtr));
 								nextTarget.cachedComponentNames.push_back(field.typeName);
 								nextTarget.cachedComponentFields.push_back(
-									GetObjectFields(nullablePtr, field.typeClassHandle));
+								    GetObjectFields(nullablePtr, field.typeClassHandle));
 								nextTarget.cachedComponentProperties.push_back(
-									GetObjectProperties(nullablePtr, field.typeClassHandle));
+								    GetObjectProperties(nullablePtr, field.typeClassHandle));
 								nextTarget.cachedComponentMethods.push_back(
-									GetObjectMethods(nullablePtr, field.typeClassHandle));
+								    GetObjectMethods(nullablePtr, field.typeClassHandle));
 								activeTab->navigationStack.push_back(std::move(nextTarget));
 							}
 						}
@@ -1047,7 +1162,7 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 
 								nextTarget.cachedComponentFields.push_back(GetObjectFields(instancePtr, targetKlass));
 								nextTarget.cachedComponentProperties.push_back(
-									GetObjectProperties(instancePtr, targetKlass));
+								    GetObjectProperties(instancePtr, targetKlass));
 								nextTarget.cachedComponentMethods.push_back(GetObjectMethods(instancePtr, targetKlass));
 
 								activeTab->navigationStack.push_back(std::move(nextTarget));
@@ -1057,9 +1172,7 @@ void Inspector::RenderEditableField(void* instance, const ComponentFieldInfo& fi
 				}
 				break;
 			}
-		default:
-			ImGui::TextDisabled("...");
-			break;
+			default: ImGui::TextDisabled("..."); break;
 		}
 	}
 
@@ -1084,7 +1197,7 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 
 	switch (prop.editableType)
 	{
-	case EditableType::Int:
+		case EditableType::Int:
 		{
 			if (prop.typeName == "System.Int64")
 			{
@@ -1096,7 +1209,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%lld", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else if (prop.typeName == "System.UInt64")
 			{
@@ -1108,7 +1224,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%llu", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else if (prop.typeName == "System.Byte")
 			{
@@ -1124,7 +1243,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%u", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else if (prop.typeName == "System.SByte")
 			{
@@ -1140,7 +1262,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%d", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else if (prop.typeName == "System.Int16" || prop.typeName == "System.Short")
 			{
@@ -1156,7 +1281,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%d", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else if (prop.typeName == "System.UInt16" || prop.typeName == "System.UShort")
 			{
@@ -1172,7 +1300,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%u", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else if (prop.typeName == "System.Char")
 			{
@@ -1198,7 +1329,10 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else
 						ImGui::Text("'\\u%04X'", static_cast<int>(val));
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			else
 			{
@@ -1210,11 +1344,14 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					else if (!prop.canWrite)
 						ImGui::Text("%d", val);
 				}
-				else { ImGui::TextDisabled("ERROR"); }
+				else
+				{
+					ImGui::TextDisabled("ERROR");
+				}
 			}
 			break;
 		}
-	case EditableType::Float:
+		case EditableType::Float:
 		{
 			float val = 0;
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(float)))
@@ -1224,10 +1361,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				else if (!prop.canWrite)
 					ImGui::Text("%.3f", val);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Double:
+		case EditableType::Double:
 		{
 			double val = 0;
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(double)))
@@ -1241,26 +1381,31 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				else if (!prop.canWrite)
 					ImGui::Text("%.6f", val);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Bool:
+		case EditableType::Bool:
 		{
 			bool val = false;
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(bool)))
 			{
 				if (prop.canWrite)
 				{
-					if (ImGui::Checkbox("##val", &val))
-						Helper::SafeInvokeSetter(instance, prop.setterHandle, &val);
+					if (ImGui::Checkbox("##val", &val)) Helper::SafeInvokeSetter(instance, prop.setterHandle, &val);
 				}
 				else
 					ImGui::Text("%s", val ? "true" : "false");
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Vector2:
+		case EditableType::Vector2:
 		{
 			UT::Vector2 val = {};
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(UT::Vector2)))
@@ -1275,10 +1420,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				else if (!prop.canWrite)
 					ImGui::Text("(%.2f, %.2f)", val.x, val.y);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Vector3:
+		case EditableType::Vector3:
 		{
 			UT::Vector3 val = {};
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(UT::Vector3)))
@@ -1294,10 +1442,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				else if (!prop.canWrite)
 					ImGui::Text("(%.2f, %.2f, %.2f)", val.x, val.y, val.z);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Vector4:
+		case EditableType::Vector4:
 		{
 			UT::Vector4 val = {};
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(UT::Vector4)))
@@ -1314,10 +1465,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				else if (!prop.canWrite)
 					ImGui::Text("(%.2f, %.2f, %.2f, %.2f)", val.x, val.y, val.z, val.w);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Quaternion:
+		case EditableType::Quaternion:
 		{
 			UT::Quaternion val = {};
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(UT::Quaternion)))
@@ -1334,17 +1488,20 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				else if (!prop.canWrite)
 					ImGui::Text("(%.3f, %.3f, %.3f, %.3f)", val.x, val.y, val.z, val.w);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Color:
+		case EditableType::Color:
 		{
 			UT::Color val = {};
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(UT::Color)))
 			{
 				float arr[4] = {val.r, val.g, val.b, val.a};
-				if (prop.canWrite && ImGui::ColorEdit4("##val", arr,
-				                                       ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaBar))
+				if (prop.canWrite &&
+				    ImGui::ColorEdit4("##val", arr, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaBar))
 				{
 					val.r = arr[0];
 					val.g = arr[1];
@@ -1358,10 +1515,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					ImGui::ColorButton("##preview", col, ImGuiColorEditFlags_NoTooltip, ImVec2(20, 14));
 				}
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::String:
+		case EditableType::String:
 		{
 			if (void* result = nullptr; Helper::SafeInvokeGetterPointer(instance, prop.getterHandle, result))
 			{
@@ -1369,10 +1529,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				const std::string currentStr = strPtr ? strPtr->ToString() : "(null)";
 				ImGui::TextDisabled("\"%s\"", currentStr.c_str());
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Decimal:
+		case EditableType::Decimal:
 		{
 			int32_t parts[4] = {};
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &parts, sizeof(parts)))
@@ -1383,24 +1546,30 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 				const int64_t mid = static_cast<uint32_t>(parts[3]);
 				const int64_t hi = static_cast<uint32_t>(parts[1]);
 				const double unscaled = static_cast<double>(lo) + static_cast<double>(mid) * 4294967296.0 +
-					static_cast<double>(hi) * 18446744073709551616.0;
+				                        static_cast<double>(hi) * 18446744073709551616.0;
 				const double value = unscaled / std::pow(10.0, scale) * (negative ? -1.0 : 1.0);
 				ImGui::TextDisabled("%.6f", value);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::Enum:
+		case EditableType::Enum:
 		{
 			int val = 0;
 			if (Helper::SafeInvokeGetter(instance, prop.getterHandle, &val, sizeof(int)))
 			{
 				ImGui::TextDisabled("%d", val);
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	case EditableType::CustomObject:
+		case EditableType::CustomObject:
 		{
 			if (void* result = nullptr; Helper::SafeInvokeGetterPointer(instance, prop.getterHandle, result))
 			{
@@ -1429,12 +1598,13 @@ void Inspector::RenderEditableProperty(void* instance, const ComponentPropertyIn
 					}
 				}
 			}
-			else { ImGui::TextDisabled("ERROR"); }
+			else
+			{
+				ImGui::TextDisabled("ERROR");
+			}
 			break;
 		}
-	default:
-		ImGui::TextDisabled("...");
-		break;
+		default: ImGui::TextDisabled("..."); break;
 	}
 
 	ImGui::PopID();
@@ -1444,8 +1614,7 @@ void Inspector::RenderTransformSection(UT::Transform* transform, InspectedObject
 {
 	if (!transform) return;
 
-	if (!ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-		return;
+	if (!ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) return;
 
 	ImGui::Indent(10.0f);
 
@@ -1474,8 +1643,7 @@ void Inspector::RenderTransformSection(UT::Transform* transform, InspectedObject
 		ImGui::TextDisabled("World Position");
 		const auto pos = transform->GetPosition();
 		float posArr[3] = {pos.x, pos.y, pos.z};
-		if (DragVector3Compact("WorldPos", posArr, 0.1f))
-			transform->SetPosition({posArr[0], posArr[1], posArr[2]});
+		if (DragVector3Compact("WorldPos", posArr, 0.1f)) transform->SetPosition({posArr[0], posArr[1], posArr[2]});
 
 		ImGui::Spacing();
 		ImGui::TextDisabled("World Rotation (Euler)");
@@ -1489,12 +1657,10 @@ void Inspector::RenderTransformSection(UT::Transform* transform, InspectedObject
 			transform->SetRotation({q[0], q[1], q[2], q[3]});
 		}
 
-		if (showBoth)
-			ImGui::EndChild();
+		if (showBoth) ImGui::EndChild();
 	}
 
-	if (showBoth)
-		ImGui::SameLine();
+	if (showBoth) ImGui::SameLine();
 
 	if (tab.showLocalTransform)
 	{
@@ -1527,8 +1693,7 @@ void Inspector::RenderTransformSection(UT::Transform* transform, InspectedObject
 		if (DragVector3Compact("LocalScale", scaleArr, 0.1f))
 			transform->SetLocalScale({scaleArr[0], scaleArr[1], scaleArr[2]});
 
-		if (showBoth)
-			ImGui::EndChild();
+		if (showBoth) ImGui::EndChild();
 	}
 
 	ImGui::Unindent(10.0f);
@@ -1536,7 +1701,8 @@ void Inspector::RenderTransformSection(UT::Transform* transform, InspectedObject
 }
 
 void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentFieldInfo>& fields,
-                                    InspectionTarget& target, InspectedObjectTab& tab, const size_t componentIndex) const
+                                    InspectionTarget& target, InspectedObjectTab& tab,
+                                    const size_t componentIndex) const
 {
 	if (fields.empty())
 	{
@@ -1544,8 +1710,7 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 		return;
 	}
 
-	if (componentIndex >= target.fieldSearchBuffers.size())
-		target.fieldSearchBuffers.resize(componentIndex + 1);
+	if (componentIndex >= target.fieldSearchBuffers.size()) target.fieldSearchBuffers.resize(componentIndex + 1);
 	char* lSearchBuffer = target.fieldSearchBuffers[componentIndex].data();
 
 	ImGui::InputTextWithHint("##FieldSearch", "Search fields...", lSearchBuffer, 256);
@@ -1564,16 +1729,17 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 	std::vector<const ComponentFieldInfo*> filteredFields;
 	for (const auto& field : fields)
 	{
-		if (PassesFieldFilter(field, lowerSearch, tab.filterEditableOnly, tab.filterStaticOnly,
-		                      tab.filterInstanceOnly))
+		if (PassesFieldFilter(field, lowerSearch, tab.filterEditableOnly, tab.filterStaticOnly, tab.filterInstanceOnly))
 			filteredFields.push_back(&field);
 	}
 
-	std::ranges::sort(filteredFields, [](const ComponentFieldInfo* a, const ComponentFieldInfo* b) {
-		if (a->isStatic != b->isStatic) return a->isStatic < b->isStatic;
-		if (!a->isStatic) return a->offset < b->offset;
-		return a->name < b->name;
-	});
+	std::ranges::sort(filteredFields,
+	                  [](const ComponentFieldInfo* a, const ComponentFieldInfo* b)
+	                  {
+		                  if (a->isStatic != b->isStatic) return a->isStatic < b->isStatic;
+		                  if (!a->isStatic) return a->offset < b->offset;
+		                  return a->name < b->name;
+	                  });
 
 	if (filteredFields.empty())
 	{
@@ -1585,11 +1751,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 	ImGui::Spacing();
 
 	if (ImGui::BeginTable("FieldsTable", 4,
-	                      ImGuiTableFlags_Resizable |
-	                      ImGuiTableFlags_BordersInnerV |
-	                      ImGuiTableFlags_SizingFixedFit |
-	                      ImGuiTableFlags_RowBg |
-	                      ImGuiTableFlags_Sortable))
+	                      ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit |
+	                          ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable))
 	{
 		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 150.0f);
 		ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 140.0f);
@@ -1621,7 +1784,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 				bool gotCollection = false;
 				if (field->isStatic)
 				{
-					gotCollection = Helper::SafeGetStaticFieldPointer(field->fieldHandle, collectionPtr) && collectionPtr;
+					gotCollection =
+					    Helper::SafeGetStaticFieldPointer(field->fieldHandle, collectionPtr) && collectionPtr;
 				}
 				else if (instance)
 				{
@@ -1642,7 +1806,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 						collectionCount = container->size;
 						if (container->array)
 						{
-							arrayDataStart = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(container->array) + 0x20);
+							arrayDataStart =
+							    reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(container->array) + 0x20);
 						}
 					}
 					else if (isDictionary)
@@ -1658,8 +1823,7 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 						Helper::SafeReadInt(collectionPtr, 0x20, collectionCount);
 						void* pSlots = nullptr;
 						Helper::SafeReadPointer(collectionPtr, 0x18, pSlots);
-						if (pSlots)
-							arrayDataStart = pSlots;
+						if (pSlots) arrayDataStart = pSlots;
 					}
 
 					collectionCount = std::max(0, std::min(collectionCount, 1000));
@@ -1695,8 +1859,7 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 				ImGui::BeginTooltip();
 				ImGui::Text("%s", field->name.c_str());
 				ImGui::TextDisabled("Type: %s", field->typeName.c_str());
-				if (!field->isStatic)
-					ImGui::TextDisabled("Offset: 0x%X", field->offset);
+				if (!field->isStatic) ImGui::TextDisabled("Offset: 0x%X", field->offset);
 				if (field->editableType != EditableType::None)
 					ImGui::TextDisabled("Editable");
 				else
@@ -1723,7 +1886,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 
 			if (field->editableType == EditableType::Enum)
 			{
-				ImGui::PushID(field->fieldHandle ? field->fieldHandle : reinterpret_cast<void*>(static_cast<intptr_t>(field->offset)));
+				ImGui::PushID(field->fieldHandle ? field->fieldHandle
+				                                 : reinterpret_cast<void*>(static_cast<intptr_t>(field->offset)));
 				if (ImGui::SmallButton("Enter"))
 				{
 					if (auto activeTab = GetActiveTab())
@@ -1743,7 +1907,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 						else if (instance)
 						{
 							if (field->isValueType)
-								instancePtr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + field->offset);
+								instancePtr =
+								    reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + field->offset);
 							else
 								Helper::SafeReadPointer(instance, field->offset, instancePtr);
 						}
@@ -1767,7 +1932,7 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 							void* targetKlass = field->typeClassHandle;
 							nextTarget.cachedComponentFields.push_back(GetObjectFields(instancePtr, targetKlass));
 							nextTarget.cachedComponentProperties.push_back(
-								GetObjectProperties(instancePtr, targetKlass));
+							    GetObjectProperties(instancePtr, targetKlass));
 							nextTarget.cachedComponentMethods.push_back(GetObjectMethods(instancePtr, targetKlass));
 							activeTab->navigationStack.push_back(std::move(nextTarget));
 						}
@@ -1809,8 +1974,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 							void* entryAddr = nullptr;
 							if (hasDictTypes)
 							{
-								entryAddr = reinterpret_cast<void*>(
-									reinterpret_cast<uintptr_t>(arrayDataStart) + i * entryStride);
+								entryAddr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(arrayDataStart) +
+								                                    i * entryStride);
 							}
 
 							ImGui::TableSetColumnIndex(0);
@@ -1894,16 +2059,14 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 										nextTarget.name = field->name + "[" + std::to_string(i) + "].Value";
 										nextTarget.classHandle = nullptr;
 
-										nextTarget.cachedComponents.push_back(
-											static_cast<UT::Component*>(valuePtr));
+										nextTarget.cachedComponents.push_back(static_cast<UT::Component*>(valuePtr));
 										nextTarget.cachedComponentNames.push_back("DictionaryValue");
 
-										nextTarget.cachedComponentFields.
-										           push_back(GetObjectFields(valuePtr, nullptr));
+										nextTarget.cachedComponentFields.push_back(GetObjectFields(valuePtr, nullptr));
 										nextTarget.cachedComponentProperties.push_back(
-											GetObjectProperties(valuePtr, nullptr));
+										    GetObjectProperties(valuePtr, nullptr));
 										nextTarget.cachedComponentMethods.push_back(
-											GetObjectMethods(valuePtr, nullptr));
+										    GetObjectMethods(valuePtr, nullptr));
 
 										activeTab->navigationStack.push_back(std::move(nextTarget));
 									}
@@ -1916,8 +2079,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 					{
 						std::string elementTypeName = "Element";
 						size_t start = field->typeName.find("<");
-						if (size_t end = field->typeName.rfind(">"); start != std::string::npos && end !=
-							std::string::npos && end > start)
+						if (size_t end = field->typeName.rfind(">");
+						    start != std::string::npos && end != std::string::npos && end > start)
 						{
 							elementTypeName = field->typeName.substr(start + 1, end - start - 1);
 						}
@@ -1934,15 +2097,16 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 						if (elemInfo.editableType == EditableType::Enum || elemInfo.editableType == EditableType::Int)
 						{
 							if (elementTypeName == "System.Int64" || elementTypeName == "System.UInt64" ||
-								elementTypeName == "System.IntPtr" || elementTypeName == "System.UIntPtr")
+							    elementTypeName == "System.IntPtr" || elementTypeName == "System.UIntPtr")
 								elemSize = sizeof(void*);
 							else if (elementTypeName == "System.Int16" || elementTypeName == "System.UInt16" ||
-								elementTypeName == "System.Char")
+							         elementTypeName == "System.Char")
 								elemSize = 2;
 							else if (elementTypeName == "System.Byte" || elementTypeName == "System.SByte" ||
-								elementTypeName == "System.Boolean")
+							         elementTypeName == "System.Boolean")
 								elemSize = 1;
-							else elemSize = 4;
+							else
+								elemSize = 4;
 							elemInfo.isValueType = true;
 						}
 						else if (elemInfo.editableType == EditableType::Float)
@@ -1975,8 +2139,9 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 							elemSize = 12;
 							elemInfo.isValueType = true;
 						}
-						else if (elemInfo.editableType == EditableType::Vector4 || elemInfo.editableType ==
-							EditableType::Quaternion || elemInfo.editableType == EditableType::Color)
+						else if (elemInfo.editableType == EditableType::Vector4 ||
+						         elemInfo.editableType == EditableType::Quaternion ||
+						         elemInfo.editableType == EditableType::Color)
 						{
 							elemSize = 16;
 							elemInfo.isValueType = true;
@@ -1988,6 +2153,10 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 
 						int lastIndex = 0;
 						Helper::SafeReadInt(collectionPtr, 0x24, lastIndex);
+						uint64_t slotCapacity = 0;
+						if (!Helper::SafeReadUInt64(arrayDataStart, 0x18, slotCapacity)) slotCapacity = 0;
+						lastIndex = std::clamp(lastIndex, 0,
+						                           static_cast<int>(std::min<uint64_t>(slotCapacity, 10000)));
 
 						int displayIndex = 0;
 						for (int i = 0; i < lastIndex && displayIndex < collectionCount; ++i)
@@ -1996,8 +2165,8 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 							Helper::SafeReadInt(arrayDataStart, 0x20 + i * slotStride, hashCode);
 							if (hashCode < 0) continue;
 
-							auto slotValueAddr = reinterpret_cast<void*>(
-								reinterpret_cast<uintptr_t>(arrayDataStart) + 0x20 + i * slotStride + 8);
+							auto slotValueAddr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(arrayDataStart) +
+							                                             0x20 + i * slotStride + 8);
 
 							ImGui::TableNextRow();
 
@@ -2033,14 +2202,13 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 						if (isArray)
 						{
 							if (size_t pos = field->typeName.find("[]"); pos != std::string::npos)
-								elementTypeName =
-									field->typeName.substr(0, pos);
+								elementTypeName = field->typeName.substr(0, pos);
 						}
 						else if (isList || isStack || isQueue || isHashSet)
 						{
 							size_t start = field->typeName.find("<");
-							if (size_t end = field->typeName.rfind(">"); start != std::string::npos && end !=
-								std::string::npos && end > start)
+							if (size_t end = field->typeName.rfind(">");
+							    start != std::string::npos && end != std::string::npos && end > start)
 							{
 								elementTypeName = field->typeName.substr(start + 1, end - start - 1);
 							}
@@ -2062,15 +2230,16 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 						if (elemInfo.editableType == EditableType::Enum || elemInfo.editableType == EditableType::Int)
 						{
 							if (elementTypeName == "System.Int64" || elementTypeName == "System.UInt64" ||
-								elementTypeName == "System.IntPtr" || elementTypeName == "System.UIntPtr")
+							    elementTypeName == "System.IntPtr" || elementTypeName == "System.UIntPtr")
 								elemSize = sizeof(void*);
 							else if (elementTypeName == "System.Int16" || elementTypeName == "System.UInt16" ||
-								elementTypeName == "System.Char")
+							         elementTypeName == "System.Char")
 								elemSize = 2;
 							else if (elementTypeName == "System.Byte" || elementTypeName == "System.SByte" ||
-								elementTypeName == "System.Boolean")
+							         elementTypeName == "System.Boolean")
 								elemSize = 1;
-							else elemSize = 4;
+							else
+								elemSize = 4;
 							elemInfo.isValueType = true;
 						}
 						else if (elemInfo.editableType == EditableType::Float)
@@ -2103,8 +2272,9 @@ void Inspector::RenderFieldsSection(void* instance, const std::vector<ComponentF
 							elemSize = 12;
 							elemInfo.isValueType = true;
 						}
-						else if (elemInfo.editableType == EditableType::Vector4 || elemInfo.editableType ==
-							EditableType::Quaternion || elemInfo.editableType == EditableType::Color)
+						else if (elemInfo.editableType == EditableType::Vector4 ||
+						         elemInfo.editableType == EditableType::Quaternion ||
+						         elemInfo.editableType == EditableType::Color)
 						{
 							elemSize = 16;
 							elemInfo.isValueType = true;
@@ -2157,8 +2327,7 @@ void Inspector::RenderPropertiesSection(void* instance, const std::vector<Compon
 		return;
 	}
 
-	if (componentIndex >= target.propertySearchBuffers.size())
-		target.propertySearchBuffers.resize(componentIndex + 1);
+	if (componentIndex >= target.propertySearchBuffers.size()) target.propertySearchBuffers.resize(componentIndex + 1);
 	char* lSearchBuffer = target.propertySearchBuffers[componentIndex].data();
 
 	ImGui::PushItemWidth(-100);
@@ -2176,8 +2345,7 @@ void Inspector::RenderPropertiesSection(void* instance, const std::vector<Compon
 	std::vector<const ComponentPropertyInfo*> filteredProps;
 	for (const auto& prop : properties)
 	{
-		if (PassesPropertyFilter(prop, lowerSearch, tab.filterEditableOnly))
-			filteredProps.push_back(&prop);
+		if (PassesPropertyFilter(prop, lowerSearch, tab.filterEditableOnly)) filteredProps.push_back(&prop);
 	}
 
 	if (filteredProps.empty())
@@ -2190,11 +2358,8 @@ void Inspector::RenderPropertiesSection(void* instance, const std::vector<Compon
 	ImGui::Spacing();
 
 	if (ImGui::BeginTable("PropertiesTable", 3,
-	                      ImGuiTableFlags_Resizable |
-	                      ImGuiTableFlags_BordersInnerV |
-	                      ImGuiTableFlags_SizingFixedFit |
-	                      ImGuiTableFlags_RowBg |
-	                      ImGuiTableFlags_Sortable))
+	                      ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit |
+	                          ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable))
 	{
 		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 150.0f);
 		ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 120.0f);
@@ -2207,11 +2372,9 @@ void Inspector::RenderPropertiesSection(void* instance, const std::vector<Compon
 
 			ImGui::TableSetColumnIndex(0);
 			const char* accessTag = prop->canRead && prop->canWrite ? "[RW]" : (prop->canRead ? "[R]" : "[W]");
-			if (!prop->canWrite)
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+			if (!prop->canWrite) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
 			ImGui::Text("%s %s", accessTag, prop->name.c_str());
-			if (!prop->canWrite)
-				ImGui::PopStyleColor();
+			if (!prop->canWrite) ImGui::PopStyleColor();
 
 			ImGui::TableSetColumnIndex(1);
 			{
@@ -2242,8 +2405,7 @@ void Inspector::RenderMethodsSection(void* instance, const std::vector<Component
 		return;
 	}
 
-	if (componentIndex >= target.methodSearchBuffers.size())
-		target.methodSearchBuffers.resize(componentIndex + 1);
+	if (componentIndex >= target.methodSearchBuffers.size()) target.methodSearchBuffers.resize(componentIndex + 1);
 	char* lSearchBuffer = target.methodSearchBuffers[componentIndex].data();
 
 	ImGui::PushItemWidth(-150);
@@ -2277,11 +2439,8 @@ void Inspector::RenderMethodsSection(void* instance, const std::vector<Component
 	ImGui::Spacing();
 
 	if (ImGui::BeginTable("MethodsTable", 3,
-	                      ImGuiTableFlags_Resizable |
-	                      ImGuiTableFlags_BordersInnerV |
-	                      ImGuiTableFlags_SizingFixedFit |
-	                      ImGuiTableFlags_RowBg |
-	                      ImGuiTableFlags_Sortable))
+	                      ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit |
+	                          ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable))
 	{
 		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 160.0f);
 		ImGui::TableSetupColumn("Signature", ImGuiTableColumnFlags_WidthStretch);
@@ -2343,10 +2502,9 @@ void Inspector::RenderMethodsSection(void* instance, const std::vector<Component
 				bool clicked = ImGui::IsItemClicked();
 				bool hovered = ImGui::IsItemHovered();
 				ImU32 bg = hovered ? IM_COL32(80, 140, 220, 255) : IM_COL32(60, 60, 60, 255);
-				ImGui::GetWindowDrawList()->AddRectFilled(
-					ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), bg, 3.0f);
-				ImGui::GetWindowDrawList()->AddText(
-					ImVec2(cursor.x + 8, cursor.y + 1), IM_COL32(255,255,255,255), "Invoke");
+				ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), bg, 3.0f);
+				ImGui::GetWindowDrawList()->AddText(ImVec2(cursor.x + 8, cursor.y + 1), IM_COL32(255, 255, 255, 255),
+				                                    "Invoke");
 				if (clicked)
 				{
 					invokeState.showPopup = true;
@@ -2387,10 +2545,8 @@ void Inspector::RenderComponentsSection(InspectionTarget& target, InspectedObjec
 	std::vector<size_t> filteredComponentIndices;
 	for (size_t i = 0; i < target.cachedComponents.size(); i++)
 	{
-		if (i >= target.cachedComponentNames.size())
-			continue;
-		if (const std::string& compName = target.cachedComponentNames[i]; PassesComponentFilter(
-			compName, lowerSearch))
+		if (i >= target.cachedComponentNames.size()) continue;
+		if (const std::string& compName = target.cachedComponentNames[i]; PassesComponentFilter(compName, lowerSearch))
 			filteredComponentIndices.push_back(i);
 	}
 
@@ -2405,20 +2561,17 @@ void Inspector::RenderComponentsSection(InspectionTarget& target, InspectedObjec
 
 	for (const size_t idx : filteredComponentIndices)
 	{
-		if (idx >= target.cachedComponents.size() ||
-			idx >= target.cachedComponentNames.size() ||
-			idx >= target.cachedComponentFields.size())
+		if (idx >= target.cachedComponents.size() || idx >= target.cachedComponentNames.size() ||
+		    idx >= target.cachedComponentFields.size())
 			continue;
 
 		const auto comp = target.cachedComponents[idx];
 		const std::string& compName = target.cachedComponentNames[idx];
 		const auto& fields = target.cachedComponentFields[idx];
-		const auto& properties = target.cachedComponentProperties.size() > idx
-			                         ? target.cachedComponentProperties[idx]
-			                         : std::vector<ComponentPropertyInfo>{};
-		const auto& methods = target.cachedComponentMethods.size() > idx
-			                      ? target.cachedComponentMethods[idx]
-			                      : std::vector<ComponentMethodInfo>{};
+		const auto& properties = target.cachedComponentProperties.size() > idx ? target.cachedComponentProperties[idx]
+		                                                                       : std::vector<ComponentPropertyInfo>{};
+		const auto& methods = target.cachedComponentMethods.size() > idx ? target.cachedComponentMethods[idx]
+		                                                                 : std::vector<ComponentMethodInfo>{};
 
 		ImGui::PushID(static_cast<int>(idx));
 
@@ -2426,21 +2579,18 @@ void Inspector::RenderComponentsSection(InspectionTarget& target, InspectedObjec
 
 		bool hasEnabledProp = false;
 		bool enabled = true;
-		if (comp)
-			hasEnabledProp = Helper::SafeGetComponentEnabled(comp, enabled);
+		if (comp) hasEnabledProp = Helper::SafeGetComponentEnabled(comp, enabled);
 
 		if (hasEnabledProp)
 		{
 			ImGui::PushID(static_cast<int>(idx * 2 + 1));
-			if (ImGui::Checkbox("##enabled", &enabled))
-				Helper::SafeSetComponentEnabled(comp, enabled);
+			if (ImGui::Checkbox("##enabled", &enabled)) Helper::SafeSetComponentEnabled(comp, enabled);
 			ImGui::PopID();
 			ImGui::SameLine();
 		}
 
 		int headerFlags = 0;
-		if (target.cachedComponents.size() == 1)
-			headerFlags |= ImGuiTreeNodeFlags_DefaultOpen;
+		if (target.cachedComponents.size() == 1) headerFlags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 		if (ImGui::CollapsingHeader(headerLabel.c_str(), headerFlags))
 		{
@@ -2497,32 +2647,26 @@ void Inspector::RenderDetailsWindow()
 
 	RenderMethodInvokePopup();
 
-	if (fieldEditor && fieldEditor->IsOpen())
-		fieldEditor->Render();
+	if (fieldEditor && fieldEditor->IsOpen()) fieldEditor->Render();
 }
 
 void Inspector::RenderTabBar()
 {
-	if (ImGui::BeginTabBar("InspectorTabs",
-	                       ImGuiTabBarFlags_Reorderable |
-	                       ImGuiTabBarFlags_AutoSelectNewTabs |
-	                       ImGuiTabBarFlags_TabListPopupButton))
+	if (ImGui::BeginTabBar("InspectorTabs", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs |
+	                                            ImGuiTabBarFlags_TabListPopupButton))
 	{
 		for (size_t i = 0; i < openTabs.size(); ++i)
 		{
 			auto& tab = openTabs[i];
 
-			if (tab.gameObject && !Helper::SafeIsAlive(tab.gameObject))
-				continue;
+			if (tab.gameObject && !Helper::SafeIsAlive(tab.gameObject)) continue;
 
 			bool tabOpen = true;
 			ImGuiTabItemFlags flags = 0;
 
-			if (IsObjectPinned(tab.gameObject))
-				flags |= ImGuiTabItemFlags_NoCloseButton;
+			if (IsObjectPinned(tab.gameObject)) flags |= ImGuiTabItemFlags_NoCloseButton;
 
-			if (pendingTabSwitch && static_cast<int>(i) == activeTabIndex)
-				flags |= ImGuiTabItemFlags_SetSelected;
+			if (pendingTabSwitch && static_cast<int>(i) == activeTabIndex) flags |= ImGuiTabItemFlags_SetSelected;
 
 			if (ImGui::BeginTabItem(tab.tabName.c_str(), &tabOpen, flags))
 			{
@@ -2556,14 +2700,12 @@ void Inspector::RenderTabContent(InspectedObjectTab& tab)
 		ImGui::Spacing();
 		if (ImGui::Button("Close Tab"))
 		{
-			if (const int tabIndex = FindTabForObject(tab.gameObject); tabIndex >= 0)
-				CloseTab(tabIndex);
+			if (const int tabIndex = FindTabForObject(tab.gameObject); tabIndex >= 0) CloseTab(tabIndex);
 		}
 		return;
 	}
 
-	if (tab.navigationStack.empty())
-		return;
+	if (tab.navigationStack.empty()) return;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
 	for (size_t i = 0; i < tab.navigationStack.size(); ++i)
@@ -2576,8 +2718,7 @@ void Inspector::RenderTabContent(InspectedObjectTab& tab)
 			ImGui::SameLine();
 		}
 		const char* label = tab.navigationStack[i].name.c_str();
-		if (label[0] == '\0')
-			label = "(unnamed)";
+		if (label[0] == '\0') label = "(unnamed)";
 		if (ImGui::Button(label))
 		{
 			tab.navigationStack.resize(i + 1);
@@ -2601,8 +2742,7 @@ void Inspector::RenderTabContent(InspectedObjectTab& tab)
 		ImGui::SameLine();
 		if (bool isActive = true; Helper::SafeGetActiveSelf(target.gameObject, isActive))
 		{
-			if (ImGui::Checkbox("Active", &isActive))
-				Helper::SafeSetActive(target.gameObject, isActive);
+			if (ImGui::Checkbox("Active", &isActive)) Helper::SafeSetActive(target.gameObject, isActive);
 		}
 
 		ImGui::SameLine();
@@ -2616,13 +2756,11 @@ void Inspector::RenderTabContent(InspectedObjectTab& tab)
 		}
 
 		ImGui::SameLine();
-		if (ImGui::SmallButton("Refresh"))
-			RefreshTabData(tab);
+		if (ImGui::SmallButton("Refresh")) RefreshTabData(tab);
 		ImGui::SameLine();
 		ImGui::Checkbox("Auto", &Config::settings.inspector.autoUpdateObject);
 
-		if (!tab.objectPath.empty())
-			ImGui::TextDisabled("Path: %s", tab.objectPath.c_str());
+		if (!tab.objectPath.empty()) ImGui::TextDisabled("Path: %s", tab.objectPath.c_str());
 
 		ImGui::Separator();
 
@@ -2641,7 +2779,6 @@ void Inspector::RenderTabContent(InspectedObjectTab& tab)
 		}
 		ImGui::EndChild();
 	}
-
 
 	else if (target.instance)
 	{

@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "inspector.h"
 #include "helper/helper.h"
+#include "inspector.h"
 
 static void AppendNodeTree(const HierarchyNode& node, std::string& out, int depth)
 {
@@ -52,8 +52,7 @@ void Inspector::RenderHierarchyNode(HierarchyNode& node, std::string_view lowerS
 
 	const bool searching = !lowerSearch.empty();
 
-	if (searching && !NodeMatchesSearch(node, lowerSearch))
-		return;
+	if (searching && !NodeMatchesSearch(node, lowerSearch)) return;
 
 	if (searching)
 	{
@@ -70,9 +69,8 @@ void Inspector::RenderHierarchyNode(HierarchyNode& node, std::string_view lowerS
 	const bool hasChildren = !node.children.empty();
 	const bool isSelected = (FindTabForObject(node.gameObject) >= 0);
 
-	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
-		ImGuiTreeNodeFlags_SpanAvailWidth |
-		ImGuiTreeNodeFlags_FramePadding;
+	ImGuiTreeNodeFlags flags =
+	    ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
 
 	if (!hasChildren) flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 	if (isSelected) flags |= ImGuiTreeNodeFlags_Selected;
@@ -84,17 +82,14 @@ void Inspector::RenderHierarchyNode(HierarchyNode& node, std::string_view lowerS
 		return;
 	}
 
-	if (!isActive)
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+	if (!isActive) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
 
 	std::string label = node.name;
-	if (hasChildren)
-		label += " [" + std::to_string(node.children.size()) + "]";
+	if (hasChildren) label += " [" + std::to_string(node.children.size()) + "]";
 
 	const bool nodeOpen = ImGui::TreeNodeEx(label.c_str(), flags);
 
-	if (!isActive)
-		ImGui::PopStyleColor();
+	if (!isActive) ImGui::PopStyleColor();
 
 	if (ImGui::IsItemHovered())
 	{
@@ -110,23 +105,19 @@ void Inspector::RenderHierarchyNode(HierarchyNode& node, std::string_view lowerS
 		ImGui::EndTooltip();
 	}
 
-	if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-		OpenObjectInNewTab(node.gameObject);
+	if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) OpenObjectInNewTab(node.gameObject);
 
 	if (ImGui::BeginPopupContextItem("##NodeCtx"))
 	{
-		if (ImGui::MenuItem("Inspect"))
-			OpenObjectInNewTab(node.gameObject);
+		if (ImGui::MenuItem("Inspect")) OpenObjectInNewTab(node.gameObject);
 
 		ImGui::Separator();
 
-		if (ImGui::MenuItem(isActive ? "Deactivate" : "Activate"))
-			Helper::SafeSetActive(node.gameObject, !isActive);
+		if (ImGui::MenuItem(isActive ? "Deactivate" : "Activate")) Helper::SafeSetActive(node.gameObject, !isActive);
 
 		ImGui::Separator();
 
-		if (ImGui::MenuItem("Copy Name"))
-			ImGui::SetClipboardText(node.name.c_str());
+		if (ImGui::MenuItem("Copy Name")) ImGui::SetClipboardText(node.name.c_str());
 
 		if (node.transform)
 		{
@@ -153,10 +144,8 @@ void Inspector::RenderHierarchyNode(HierarchyNode& node, std::string_view lowerS
 		if (hasChildren)
 		{
 			ImGui::Separator();
-			if (ImGui::MenuItem("Expand Children"))
-				SetAllNodesExpanded(node.children, true);
-			if (ImGui::MenuItem("Collapse Children"))
-				SetAllNodesExpanded(node.children, false);
+			if (ImGui::MenuItem("Expand Children")) SetAllNodesExpanded(node.children, true);
+			if (ImGui::MenuItem("Collapse Children")) SetAllNodesExpanded(node.children, false);
 		}
 
 		ImGui::EndPopup();

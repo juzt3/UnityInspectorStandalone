@@ -55,8 +55,8 @@ std::vector<std::pair<std::string, int>> GetEnumValues(std::string_view enumType
 				int value = 0;
 				if (Config::state.unityMode == UnityResolve::Mode::Mono)
 				{
-					void* vTable = UR::Invoke<void*, void*, void*>("mono_class_vtable", UR::pDomain,
-					                                               UR::Invoke<void*, void*>("mono_field_get_parent", field));
+					void* vTable = UR::Invoke<void*, void*, void*>(
+					    "mono_class_vtable", UR::pDomain, UR::Invoke<void*, void*>("mono_field_get_parent", field));
 					UR::Invoke<void, void*, void*, int*>("mono_field_static_get_value", vTable, field, &value);
 				}
 				else
@@ -71,15 +71,14 @@ std::vector<std::pair<std::string, int>> GetEnumValues(std::string_view enumType
 	return result;
 }
 
-static void CheckAndUpdateEnumType(std::string& typeName, std::string_view fieldTypeName,
-                                   std::string* enumTypeNameOut)
+static void CheckAndUpdateEnumType(std::string& typeName, std::string_view fieldTypeName, std::string* enumTypeNameOut)
 {
 	if (enumTypeNameOut) enumTypeNameOut->clear();
 
 	const size_t lastDot = typeName.rfind('.');
 
 	if (const std::string shortName = (lastDot != std::string::npos) ? typeName.substr(lastDot + 1) : typeName;
-		IsEnumClass(shortName))
+	    IsEnumClass(shortName))
 	{
 		typeName = "Enum";
 		if (enumTypeNameOut) *enumTypeNameOut = shortName;
@@ -104,33 +103,22 @@ EditableType DetermineEditableType(std::string_view typeName, std::string* enumT
 	if (effectiveTypeName == "Enum") return EditableType::Enum;
 
 	if (typeName == "System.Int16" || typeName == "System.Int32" || typeName == "System.Int64" ||
-		typeName == "System.UInt16" || typeName == "System.UInt32" || typeName == "System.UInt64" ||
-		typeName == "System.Byte" || typeName == "System.SByte" || typeName == "System.Char" ||
-		typeName == "System.Short" || typeName == "System.UShort" ||
-		typeName == "System.Long" || typeName == "System.ULong" ||
-		typeName == "System.IntPtr" || typeName == "System.UIntPtr" ||
-		IsUInt64WrappingType(typeName))
+	    typeName == "System.UInt16" || typeName == "System.UInt32" || typeName == "System.UInt64" ||
+	    typeName == "System.Byte" || typeName == "System.SByte" || typeName == "System.Char" ||
+	    typeName == "System.Short" || typeName == "System.UShort" || typeName == "System.Long" ||
+	    typeName == "System.ULong" || typeName == "System.IntPtr" || typeName == "System.UIntPtr" ||
+	    IsUInt64WrappingType(typeName))
 		return EditableType::Int;
-	if (typeName == "System.Single")
-		return EditableType::Float;
-	if (typeName == "System.Double")
-		return EditableType::Double;
-	if (typeName == "System.Decimal")
-		return EditableType::Decimal;
-	if (typeName == "System.Boolean")
-		return EditableType::Bool;
-	if (typeName == "System.String")
-		return EditableType::String;
-	if (typeName == "UnityEngine.Vector2")
-		return EditableType::Vector2;
-	if (typeName == "UnityEngine.Vector3")
-		return EditableType::Vector3;
-	if (typeName == "UnityEngine.Vector4")
-		return EditableType::Vector4;
-	if (typeName == "UnityEngine.Quaternion")
-		return EditableType::Quaternion;
-	if (typeName == "UnityEngine.Color")
-		return EditableType::Color;
+	if (typeName == "System.Single") return EditableType::Float;
+	if (typeName == "System.Double") return EditableType::Double;
+	if (typeName == "System.Decimal") return EditableType::Decimal;
+	if (typeName == "System.Boolean") return EditableType::Bool;
+	if (typeName == "System.String") return EditableType::String;
+	if (typeName == "UnityEngine.Vector2") return EditableType::Vector2;
+	if (typeName == "UnityEngine.Vector3") return EditableType::Vector3;
+	if (typeName == "UnityEngine.Vector4") return EditableType::Vector4;
+	if (typeName == "UnityEngine.Quaternion") return EditableType::Quaternion;
+	if (typeName == "UnityEngine.Color") return EditableType::Color;
 
 	return EditableType::CustomObject;
 }
@@ -165,8 +153,8 @@ void FieldEditor::OpenFieldEditor(UR::Field* field, void* instance, std::string_
 				{
 					if (instance)
 					{
-						state.nestedInstance = reinterpret_cast<void*>(
-							reinterpret_cast<uintptr_t>(instance) + field->offset);
+						state.nestedInstance =
+						    reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + field->offset);
 					}
 				}
 				else
@@ -178,8 +166,7 @@ void FieldEditor::OpenFieldEditor(UR::Field* field, void* instance, std::string_
 					}
 					else if (instance)
 					{
-						ptrValue = *reinterpret_cast<void**>(
-							reinterpret_cast<uintptr_t>(instance) + field->offset);
+						ptrValue = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(instance) + field->offset);
 					}
 					state.nestedInstance = ptrValue;
 				}
@@ -227,8 +214,7 @@ void FieldEditor::OpenFieldEditor(const ComponentFieldInfo& fieldInfo, void* ins
 	{
 		if (instance)
 		{
-			state.nestedInstance = reinterpret_cast<void*>(
-				reinterpret_cast<uintptr_t>(instance) + fieldInfo.offset);
+			state.nestedInstance = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + fieldInfo.offset);
 		}
 	}
 	else
@@ -239,8 +225,7 @@ void FieldEditor::OpenFieldEditor(const ComponentFieldInfo& fieldInfo, void* ins
 		}
 		else if (instance)
 		{
-			state.nestedInstance = *reinterpret_cast<void**>(
-				reinterpret_cast<uintptr_t>(instance) + fieldInfo.offset);
+			state.nestedInstance = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(instance) + fieldInfo.offset);
 		}
 	}
 }
@@ -327,14 +312,12 @@ void FieldEditor::Render()
 
 		ImGui::Separator();
 
-		if (IsEditableType(field->type ? field->type->name : "") &&
-			!(state.nestedClass && !state.nestedInstance))
+		if (IsEditableType(field->type ? field->type->name : "") && !(state.nestedClass && !state.nestedInstance))
 		{
 			if (ImGui::Button("Apply", ImVec2(120, 0)))
 			{
 				WriteFieldValue();
-				if (state.onValueChanged)
-					state.onValueChanged();
+				if (state.onValueChanged) state.onValueChanged();
 			}
 
 			ImGui::SameLine();
@@ -359,35 +342,28 @@ void FieldEditor::Render()
 	nestedEditors.insert(nestedEditors.end(), std::make_move_iterator(newEditors.begin()),
 	                     std::make_move_iterator(newEditors.end()));
 
-	std::erase_if(nestedEditors, [](const std::unique_ptr<FieldEditor>& e)
-	{
-		return !e || !e->IsOpen();
-	});
+	std::erase_if(nestedEditors, [](const std::unique_ptr<FieldEditor>& e) { return !e || !e->IsOpen(); });
 }
 
 bool FieldEditor::IsEditableType(std::string_view typeName)
 {
 	return IsIntegerType(typeName) || IsFloatType(typeName) || IsBoolType(typeName) || IsStringType(typeName) ||
-		typeName == "System.Decimal" ||
-		IsUInt64WrappingType(typeName);
+	       typeName == "System.Decimal" || IsUInt64WrappingType(typeName);
 }
 
 bool FieldEditor::IsIntegerType(std::string_view typeName)
 {
-	return typeName == "System.Int16" || typeName == "System.UInt16" ||
-		typeName == "System.Int32" || typeName == "System.Int" ||
-		typeName == "System.UInt32" || typeName == "System.UInt" ||
-		typeName == "System.Int64" || typeName == "System.UInt64" ||
-		typeName == "System.Long" || typeName == "System.ULong" ||
-		typeName == "System.Byte" || typeName == "System.SByte" ||
-		typeName == "System.Short" || typeName == "System.UShort" ||
-		typeName == "System.Char";
+	return typeName == "System.Int16" || typeName == "System.UInt16" || typeName == "System.Int32" ||
+	       typeName == "System.Int" || typeName == "System.UInt32" || typeName == "System.UInt" ||
+	       typeName == "System.Int64" || typeName == "System.UInt64" || typeName == "System.Long" ||
+	       typeName == "System.ULong" || typeName == "System.Byte" || typeName == "System.SByte" ||
+	       typeName == "System.Short" || typeName == "System.UShort" || typeName == "System.Char";
 }
 
 bool FieldEditor::IsFloatType(std::string_view typeName)
 {
-	return typeName == "System.Single" || typeName == "System.Float" ||
-		typeName == "System.Double" || typeName == "System.Decimal";
+	return typeName == "System.Single" || typeName == "System.Float" || typeName == "System.Double" ||
+	       typeName == "System.Decimal";
 }
 
 bool FieldEditor::IsBoolType(std::string_view typeName)
@@ -402,10 +378,8 @@ bool FieldEditor::IsStringType(std::string_view typeName)
 
 bool FieldEditor::IsPointerType(std::string_view typeName)
 {
-	return !IsEditableType(typeName) &&
-		!typeName.empty() &&
-		!typeName.starts_with("System.") &&
-		!typeName.starts_with("UnityEngine.");
+	return !IsEditableType(typeName) && !typeName.empty() && !typeName.starts_with("System.") &&
+	       !typeName.starts_with("UnityEngine.");
 }
 
 UR::Class* FieldEditor::GetPointerClass(std::string_view typeName)
@@ -416,8 +390,7 @@ UR::Class* FieldEditor::GetPointerClass(std::string_view typeName)
 		for (const auto& klass : assembly->classes)
 		{
 			if (!klass) continue;
-			if (klass->m_name == typeName)
-				return klass.get();
+			if (klass->m_name == typeName) return klass.get();
 		}
 	}
 
@@ -430,8 +403,7 @@ UR::Class* FieldEditor::GetPointerClass(std::string_view typeName)
 			for (const auto& klass : assembly->classes)
 			{
 				if (!klass) continue;
-				if (klass->m_name == shortName)
-					return klass.get();
+				if (klass->m_name == shortName) return klass.get();
 			}
 		}
 	}
@@ -510,7 +482,7 @@ void FieldEditor::ReadValueFromAddress(void* addr, std::string_view typeName, Fi
 		const int64_t mid = static_cast<uint32_t>(parts[3]);
 		const int64_t hi = static_cast<uint32_t>(parts[1]);
 		const double unscaled = static_cast<double>(lo) + static_cast<double>(mid) * 4294967296.0 +
-			static_cast<double>(hi) * 18446744073709551616.0;
+		                        static_cast<double>(hi) * 18446744073709551616.0;
 		state.floatValue = static_cast<float>(unscaled / std::pow(10.0, scale) * (negative ? -1.0 : 1.0));
 	}
 	else if (typeName == "UnityEngine.Vector2")
@@ -654,37 +626,24 @@ std::string FieldEditor::FormatFieldValue(void* addr, std::string_view typeName)
 		}
 		return "null";
 	}
-	if (IsBoolType(typeName))
-		return *static_cast<bool*>(addr) ? "true" : "false";
-	if (typeName == "System.Double")
-		return std::format("{:.4f}", *static_cast<double*>(addr));
-	if (IsFloatType(typeName))
-		return std::format("{:.4f}", *static_cast<float*>(addr));
-	if (typeName == "System.Int64")
-		return std::to_string(*static_cast<int64_t*>(addr));
-	if (typeName == "System.UInt64")
-		return std::to_string(*static_cast<uint64_t*>(addr));
-	if (typeName == "System.Int16")
-		return std::to_string(*static_cast<int16_t*>(addr));
-	if (typeName == "System.UInt16")
-		return std::to_string(*static_cast<uint16_t*>(addr));
+	if (IsBoolType(typeName)) return *static_cast<bool*>(addr) ? "true" : "false";
+	if (typeName == "System.Double") return std::format("{:.4f}", *static_cast<double*>(addr));
+	if (IsFloatType(typeName)) return std::format("{:.4f}", *static_cast<float*>(addr));
+	if (typeName == "System.Int64") return std::to_string(*static_cast<int64_t*>(addr));
+	if (typeName == "System.UInt64") return std::to_string(*static_cast<uint64_t*>(addr));
+	if (typeName == "System.Int16") return std::to_string(*static_cast<int16_t*>(addr));
+	if (typeName == "System.UInt16") return std::to_string(*static_cast<uint16_t*>(addr));
 	if (typeName == "System.Char")
 	{
 		char16_t val = *static_cast<char16_t*>(addr);
-		if (val >= 32 && val < 127)
-			return std::format("'{}'", static_cast<char>(val));
+		if (val >= 32 && val < 127) return std::format("'{}'", static_cast<char>(val));
 		return std::format("'\\u{:04X}'", static_cast<int>(val));
 	}
-	if (typeName == "System.Byte")
-		return std::to_string(*static_cast<uint8_t*>(addr));
-	if (typeName == "System.SByte")
-		return std::to_string(*static_cast<int8_t*>(addr));
-	if (typeName == "System.IntPtr")
-		return std::to_string(*static_cast<intptr_t*>(addr));
-	if (typeName == "System.UIntPtr")
-		return std::to_string(*static_cast<uintptr_t*>(addr));
-	if (IsUInt64WrappingType(typeName))
-		return std::to_string(*static_cast<uint64_t*>(addr));
+	if (typeName == "System.Byte") return std::to_string(*static_cast<uint8_t*>(addr));
+	if (typeName == "System.SByte") return std::to_string(*static_cast<int8_t*>(addr));
+	if (typeName == "System.IntPtr") return std::to_string(*static_cast<intptr_t*>(addr));
+	if (typeName == "System.UIntPtr") return std::to_string(*static_cast<uintptr_t*>(addr));
+	if (IsUInt64WrappingType(typeName)) return std::to_string(*static_cast<uint64_t*>(addr));
 	if (typeName == "System.Decimal")
 	{
 		const auto* parts = static_cast<int32_t*>(addr);
@@ -694,7 +653,7 @@ std::string FieldEditor::FormatFieldValue(void* addr, std::string_view typeName)
 		const int64_t mid = static_cast<uint32_t>(parts[3]);
 		const int64_t hi = static_cast<uint32_t>(parts[1]);
 		const double unscaled = static_cast<double>(lo) + static_cast<double>(mid) * 4294967296.0 +
-			static_cast<double>(hi) * 18446744073709551616.0;
+		                        static_cast<double>(hi) * 18446744073709551616.0;
 		const double value = unscaled / std::pow(10.0, scale) * (negative ? -1.0 : 1.0);
 		return std::format("{:.6f}", value);
 	}
@@ -723,11 +682,9 @@ std::string FieldEditor::FormatFieldValue(void* addr, std::string_view typeName)
 		const auto& v = *static_cast<Color*>(addr);
 		return std::format("RGBA({:.2f}, {:.2f}, {:.2f}, {:.2f})", v.r, v.g, v.b, v.a);
 	}
-	if (IsIntegerType(typeName))
-		return std::to_string(*static_cast<int32_t*>(addr));
+	if (IsIntegerType(typeName)) return std::to_string(*static_cast<int32_t*>(addr));
 
-	if (void* ptr = *static_cast<void**>(addr))
-		return std::format("0x{:X}", reinterpret_cast<uintptr_t>(ptr));
+	if (void* ptr = *static_cast<void**>(addr)) return std::format("0x{:X}", reinterpret_cast<uintptr_t>(ptr));
 	return "null";
 }
 
@@ -809,7 +766,7 @@ void FieldEditor::ReadFieldValue()
 				const int64_t mid = static_cast<uint32_t>(parts[3]);
 				const int64_t hi = static_cast<uint32_t>(parts[1]);
 				const double unscaled = static_cast<double>(lo) + static_cast<double>(mid) * 4294967296.0 +
-					static_cast<double>(hi) * 18446744073709551616.0;
+				                        static_cast<double>(hi) * 18446744073709551616.0;
 				state.floatValue = static_cast<float>(unscaled / std::pow(10.0, scale) * (negative ? -1.0 : 1.0));
 			}
 			else if (typeName == "System.Int16" || typeName == "System.Short")
@@ -875,8 +832,8 @@ void FieldEditor::ReadFieldValue()
 		}
 		else if (state.targetInstance)
 		{
-			const auto fieldAddr = reinterpret_cast<void*>(
-				reinterpret_cast<uintptr_t>(state.targetInstance) + field->offset);
+			const auto fieldAddr =
+			    reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(state.targetInstance) + field->offset);
 			ReadValueFromAddress(fieldAddr, typeName, state);
 		}
 	}
@@ -982,27 +939,27 @@ void FieldEditor::WriteFieldValue()
 			}
 			else if (typeName == "UnityEngine.Vector2")
 			{
-				Vec2 val = { state.floatValue, state.floatValue };
+				Vec2 val = {state.floatValue, state.floatValue};
 				field->SetStaticValue(&val);
 			}
 			else if (typeName == "UnityEngine.Vector3")
 			{
-				Vec3 val = { state.floatValue, state.floatValue, state.floatValue };
+				Vec3 val = {state.floatValue, state.floatValue, state.floatValue};
 				field->SetStaticValue(&val);
 			}
 			else if (typeName == "UnityEngine.Vector4")
 			{
-				Vec4 val = { state.floatValue, state.floatValue, state.floatValue, state.floatValue };
+				Vec4 val = {state.floatValue, state.floatValue, state.floatValue, state.floatValue};
 				field->SetStaticValue(&val);
 			}
 			else if (typeName == "UnityEngine.Quaternion")
 			{
-				Quat val = { state.floatValue, state.floatValue, state.floatValue, state.floatValue };
+				Quat val = {state.floatValue, state.floatValue, state.floatValue, state.floatValue};
 				field->SetStaticValue(&val);
 			}
 			else if (typeName == "UnityEngine.Color")
 			{
-				Color val = { state.floatValue, state.floatValue, state.floatValue, state.floatValue };
+				Color val = {state.floatValue, state.floatValue, state.floatValue, state.floatValue};
 				field->SetStaticValue(&val);
 			}
 			else if (DetermineEditableType(typeName) == EditableType::Enum)
@@ -1018,8 +975,8 @@ void FieldEditor::WriteFieldValue()
 		}
 		else if (state.targetInstance)
 		{
-			const auto fieldAddr = reinterpret_cast<void*>(
-				reinterpret_cast<uintptr_t>(state.targetInstance) + field->offset);
+			const auto fieldAddr =
+			    reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(state.targetInstance) + field->offset);
 			WriteValueToAddress(fieldAddr, typeName, state);
 		}
 	}
@@ -1147,14 +1104,13 @@ void FieldEditor::RenderNestedFieldValue(const UR::Field* field, void* instance)
 	}
 
 	const std::string typeName = field->type->name;
-	const auto fieldAddr = reinterpret_cast<void*>(
-		reinterpret_cast<uintptr_t>(instance) + field->offset);
+	const auto fieldAddr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(instance) + field->offset);
 
 	try
 	{
 		const std::string formatted = FormatFieldValue(fieldAddr, typeName);
-		if (const bool isNull = (formatted == "null"); isNull || (!IsEditableType(typeName) && !
-			IsPointerType(typeName)))
+		if (const bool isNull = (formatted == "null");
+		    isNull || (!IsEditableType(typeName) && !IsPointerType(typeName)))
 			ImGui::TextDisabled("%s", formatted.c_str());
 		else
 			ImGui::TextUnformatted(formatted.c_str());

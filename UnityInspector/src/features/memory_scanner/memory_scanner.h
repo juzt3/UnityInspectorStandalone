@@ -1,9 +1,23 @@
 #pragma once
 #include "features/features.h"
 
-enum class ScanValueType { Int, Long, Float, Double, Bool };
+enum class ScanValueType
+{
+	Int,
+	Long,
+	Float,
+	Double,
+	Bool
+};
 
-enum class ScanComparison { Exact, Increased, Decreased, Changed, Unchanged };
+enum class ScanComparison
+{
+	Exact,
+	Increased,
+	Decreased,
+	Changed,
+	Unchanged
+};
 
 enum class ActualFieldType
 {
@@ -53,10 +67,15 @@ class MemoryScanner final : public IFeature
 public:
 	void Update(float deltaTime) override;
 	void Render() override;
-	~MemoryScanner() override;
 
 private:
-	enum class ScanOperation { None, FirstScan, NextScan, Reset };
+	enum class ScanOperation
+	{
+		None,
+		FirstScan,
+		NextScan,
+		Reset
+	};
 
 	ScanValueType selectedType = ScanValueType::Int;
 	ScanComparison comparison = ScanComparison::Exact;
@@ -102,10 +121,7 @@ private:
 		void* address;
 		void* klass;
 
-		bool operator==(const VisitedKey& o) const noexcept
-		{
-			return address == o.address && klass == o.klass;
-		}
+		bool operator==(const VisitedKey& o) const noexcept { return address == o.address && klass == o.klass; }
 	};
 
 	struct VisitedKeyHash
@@ -149,8 +165,13 @@ private:
 	std::vector<void*> objectsGathered;
 
 	ScanField::ValUnion editValue{.i64 = 0};
+	struct PendingWrite
+	{
+		ScanField field;
+		ScanField::ValUnion value;
+	};
+	std::optional<PendingWrite> pendingWrite;
 
-	std::thread scanThread;
 	std::mutex resultsMutex;
 	std::atomic<bool> stopRequested{false};
 };

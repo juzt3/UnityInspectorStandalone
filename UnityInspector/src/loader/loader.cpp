@@ -2,23 +2,23 @@
 #include "loader.h"
 
 #include "config/config.h"
+#include "features/features.h"
 #include "hooks/hooks.h"
 #include "window/external_overlay.h"
 #include "window/window.h"
 #include "window/window_finder.h"
-#include "features/features.h"
 
 namespace Loader
 {
 	static DWORD WINAPI OverlayInitThread(LPVOID)
 	{
-		if (!Config::settings.ini.internal_overlay && !Config::settings.ini.external_overlay)
-			return NULL;
+		if (!Config::settings.ini.internal_overlay && !Config::settings.ini.external_overlay) return NULL;
 
 		bool hookSuccess = false;
 
 		LOG_INFO("Initializing Overlay Hook.");
-		while (!WindowFinder::FindGameWindow()) Sleep(2000);
+		while (!WindowFinder::FindGameWindow())
+			Sleep(2000);
 
 		if (Config::settings.ini.internal_overlay)
 		{
@@ -64,7 +64,8 @@ namespace Loader
 
 	static DWORD WINAPI LoaderThread(LPVOID)
 	{
-		while (!WindowFinder::FindGameWindow()) Sleep(100);
+		while (!WindowFinder::FindGameWindow())
+			Sleep(100);
 
 		do
 		{
@@ -83,8 +84,7 @@ namespace Loader
 			}
 
 			Sleep(100);
-		}
-		while (true);
+		} while (true);
 
 		if (Config::settings.ini.debug_console) console::StartConsole("Debug Console", false);
 		LOG_INFO("loaded, initializing...");

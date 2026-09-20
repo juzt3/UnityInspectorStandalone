@@ -18,6 +18,7 @@ add_library(UnityInspector SHARED
     helper/helper.cpp
     hooks/hooks.cpp
     hooks/console_hooks/console_hooks.cpp
+    hooks/main_thread_hooks/main_thread_hooks.cpp
     menu/menu.cpp
     menu/misc_tab/misc_tab.cpp
     menu/debug_tab/debug_tab.cpp
@@ -41,7 +42,7 @@ target_precompile_headers(UnityInspector PRIVATE pch/pch.h)
 target_link_libraries(UnityInspector PRIVATE
         imgui
         kiero
-        "${PROJECT_SOURCE_DIR}/UnityInspector/library/detours/detours.lib"
+        safetyhook
         "${PROJECT_SOURCE_DIR}/UnityInspector/library/luajit/lua51.lib"
 )
 

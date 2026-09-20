@@ -18,3 +18,18 @@ if(MSVC)
 endif()
 
 add_subdirectory(kiero2)
+
+add_library(safetyhook STATIC
+    safetyhook/safetyhook.cpp
+    safetyhook/Zydis.c
+)
+
+target_include_directories(safetyhook PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/safetyhook"
+)
+
+if(MSVC)
+    target_compile_options(safetyhook PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:/EHsc>
+    )
+endif()

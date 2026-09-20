@@ -4,6 +4,7 @@
 class ConsoleHooks : public IHook
 {
 public:
+	std::string_view TargetAssembly() const override { return "UnityEngine.CoreModule.dll"; }
 	void Install() override;
 
 private:

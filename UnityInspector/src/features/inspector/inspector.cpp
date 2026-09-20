@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "inspector.h"
 #include "helper/helper.h"
+#include "inspector.h"
 
 REGISTER_FEATURE(Inspector)
 
@@ -9,7 +9,7 @@ void Inspector::Update(const float deltaTime)
 	s_Instance = this;
 
 	const auto& [Enabled, AutoUpdateObject, AutoRefresh, ShowAssemblyExplorer, ShowDebugConsole, ObjectPickerEnabled] =
-		Config::settings.inspector;
+	    Config::settings.inspector;
 	if (!Enabled || !Config::state.showMenu) return;
 
 	UR::ThreadAttach();
@@ -21,8 +21,7 @@ void Inspector::Update(const float deltaTime)
 	{
 		timer -= 1.f;
 
-		if (AutoRefresh)
-			RefreshHierarchy();
+		if (AutoRefresh) RefreshHierarchy();
 
 		if (AutoUpdateObject && activeTabIndex >= 0 && std::cmp_less(activeTabIndex, openTabs.size()))
 		{
@@ -45,19 +44,16 @@ void Inspector::Render()
 		{
 			if (ImGui::BeginTabItem("Scene"))
 			{
-				if (ImGui::Button("Refresh"))
-					RefreshHierarchy();
+				if (ImGui::Button("Refresh")) RefreshHierarchy();
 
 				ImGui::SameLine();
 				ImGui::Checkbox("Auto", &Config::settings.inspector.autoRefresh);
 
 				ImGui::SameLine();
-				if (ImGui::SmallButton("Collapse"))
-					SetAllNodesExpanded(rootNodes, false);
+				if (ImGui::SmallButton("Collapse")) SetAllNodesExpanded(rootNodes, false);
 
 				ImGui::SameLine();
-				if (ImGui::SmallButton("Expand"))
-					SetAllNodesExpanded(rootNodes, true);
+				if (ImGui::SmallButton("Expand")) SetAllNodesExpanded(rootNodes, true);
 
 				ImGui::SameLine();
 				ImGui::TextDisabled("| %zu", rootNodes.size());
@@ -72,10 +68,9 @@ void Inspector::Render()
 						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.15f, 0.15f, 1.0f));
 					}
 					if (ImGui::SmallButton(pickerActive ? "Pick: ON" : "Pick"))
-						Config::settings.inspector.objectPickerEnabled = !Config::settings.inspector.
-							objectPickerEnabled;
-					if (pickerActive)
-						ImGui::PopStyleColor(3);
+						Config::settings.inspector.objectPickerEnabled =
+						    !Config::settings.inspector.objectPickerEnabled;
+					if (pickerActive) ImGui::PopStyleColor(3);
 				}
 
 				ImGui::PushItemWidth(-1);
@@ -97,8 +92,7 @@ void Inspector::Render()
 						ImGui::TextDisabled("No scene hierarchy loaded");
 						ImGui::Spacing();
 						if (cx > 0.0f) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + cx);
-						if (ImGui::Button("Load Scene Hierarchy", ImVec2(180, 0)))
-							RefreshHierarchy();
+						if (ImGui::Button("Load Scene Hierarchy", ImVec2(180, 0))) RefreshHierarchy();
 					}
 					else
 					{
@@ -116,8 +110,7 @@ void Inspector::Render()
 
 			if (ImGui::BeginTabItem("Static Instances"))
 			{
-				if (ImGui::Button("Refresh"))
-					ScanStaticClasses();
+				if (ImGui::Button("Refresh")) ScanStaticClasses();
 
 				ImGui::SameLine();
 				ImGui::Checkbox("Auto", &Config::settings.inspector.autoRefresh);
@@ -213,28 +206,28 @@ void Inspector::ScanStaticClasses()
 						// Mono JIT will abort() if mono_class_vtable is called on an uninflated generic type.
 						// Skip generic types (backtick) and compiler-generated types (<, $).
 						if (klass->m_name.find('`') != std::string::npos ||
-							klass->m_name.find('<') != std::string::npos ||
-							klass->m_name.find('$') != std::string::npos)
+						    klass->m_name.find('<') != std::string::npos ||
+						    klass->m_name.find('$') != std::string::npos)
 							continue;
 
 						std::string typeName = field->type->name;
-						if (typeName.starts_with("System.") || typeName.starts_with("UnityEngine.") || typeName.
-							starts_with("Unity."))
+						if (typeName.starts_with("System.") || typeName.starts_with("UnityEngine.") ||
+						    typeName.starts_with("Unity."))
 							continue;
 
 						if (typeName == "int" || typeName == "float" || typeName == "bool" || typeName == "double" ||
-							typeName == "string")
+						    typeName == "string")
 							continue;
 
 						void* instance = nullptr;
 
 						if (Config::state.unityMode == UnityResolve::Mode::Il2Cpp)
 						{
-							if (void* static_fields_ptr = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(klass->
-								address) + 0xB8))
+							if (void* static_fields_ptr =
+							        *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(klass->address) + 0xB8))
 							{
 								instance = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(static_fields_ptr) +
-									field->offset);
+								                                     field->offset);
 							}
 						}
 						else
@@ -254,9 +247,8 @@ void Inspector::ScanStaticClasses()
 							node.instance = instance;
 							node.typeClassHandle = typeClassHandle;
 
-							std::string kName = klass->namespaze.empty()
-								                    ? klass->m_name
-								                    : klass->namespaze + "." + klass->m_name;
+							std::string kName =
+							    klass->namespaze.empty() ? klass->m_name : klass->namespaze + "." + klass->m_name;
 							node.name = kName + "." + field->name;
 							node.fullName = node.name + " (" + typeName + ")";
 							staticInstances.push_back(std::move(node));
@@ -270,10 +262,7 @@ void Inspector::ScanStaticClasses()
 		}
 	}
 
-	std::ranges::sort(staticInstances, [](const auto& a, const auto& b)
-	{
-		return a.fullName < b.fullName;
-	});
+	std::ranges::sort(staticInstances, [](const auto& a, const auto& b) { return a.fullName < b.fullName; });
 
 	hasScannedStatic = true;
 	printf("[ScanStaticClasses] Finished. Found %zu instances.\n", staticInstances.size());
@@ -328,8 +317,8 @@ void Inspector::InspectInstance(void* instance, void* classHandle, const std::st
 	{
 		rootTarget.cachedComponents.push_back(static_cast<UT::Component*>(instance));
 		std::string className = "(Unknown)";
-		if (const char* cn = UR::Invoke<const char*, void*>(mono ? "mono_class_get_name" : "il2cpp_class_get_name",
-		                                                    classHandle))
+		if (const char* cn =
+		        UR::Invoke<const char*, void*>(mono ? "mono_class_get_name" : "il2cpp_class_get_name", classHandle))
 			className = cn;
 		rootTarget.cachedComponentNames.push_back(className);
 		rootTarget.cachedComponentFields.push_back(GetObjectFields(instance, classHandle));
@@ -339,8 +328,8 @@ void Inspector::InspectInstance(void* instance, void* classHandle, const std::st
 	else
 	{
 		std::string className = "(Unknown)";
-		if (const char* cn = UR::Invoke<const char*, void*>(mono ? "mono_class_get_name" : "il2cpp_class_get_name",
-		                                                    classHandle))
+		if (const char* cn =
+		        UR::Invoke<const char*, void*>(mono ? "mono_class_get_name" : "il2cpp_class_get_name", classHandle))
 			className = cn;
 		rootTarget.cachedComponentNames.push_back(className + " (static)");
 		rootTarget.cachedComponentFields.push_back(GetObjectFields(nullptr, classHandle));

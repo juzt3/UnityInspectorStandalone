@@ -1,9 +1,8 @@
 #include "pch.h"
-#include "inspector.h"
 #include "helper/helper.h"
+#include "inspector.h"
 
 #define API(fn) (mono ? "mono_" fn : "il2cpp_" fn)
-
 
 std::string Inspector::GetComponentTypeName(UT::Component* component) const
 {
@@ -13,8 +12,7 @@ std::string Inspector::GetComponentTypeName(UT::Component* component) const
 
 	if (void* klass = Helper::SafeGetObjectClass(component))
 	{
-		if (const char* className = UR::Invoke<const char*, void*>(API("class_get_name"), klass))
-			return {className};
+		if (const char* className = UR::Invoke<const char*, void*>(API("class_get_name"), klass)) return {className};
 	}
 
 	return "Component";
@@ -25,8 +23,7 @@ std::vector<ComponentFieldInfo> Inspector::GetObjectFields(void* obj, void* klas
 	std::vector<ComponentFieldInfo> fields;
 	const bool mono = Config::state.unityMode == UnityResolve::Mode::Mono;
 
-	if (!klass && obj)
-		klass = Helper::SafeGetObjectClass(obj);
+	if (!klass && obj) klass = Helper::SafeGetObjectClass(obj);
 
 	if (!klass) return fields;
 
@@ -101,8 +98,7 @@ std::vector<ComponentPropertyInfo> Inspector::GetObjectProperties(void* obj, voi
 	std::vector<ComponentPropertyInfo> properties;
 	const bool mono = Config::state.unityMode == UnityResolve::Mode::Mono;
 
-	if (!klass && obj)
-		klass = Helper::SafeGetObjectClass(obj);
+	if (!klass && obj) klass = Helper::SafeGetObjectClass(obj);
 
 	if (!klass) return properties;
 
@@ -164,8 +160,7 @@ std::vector<ComponentMethodInfo> Inspector::GetObjectMethods(void* obj, void* kl
 	std::vector<ComponentMethodInfo> methods;
 	const bool mono = Config::state.unityMode == UnityResolve::Mode::Mono;
 
-	if (!klass && obj)
-		klass = Helper::SafeGetObjectClass(obj);
+	if (!klass && obj) klass = Helper::SafeGetObjectClass(obj);
 
 	if (!klass) return methods;
 
@@ -203,8 +198,8 @@ std::vector<ComponentMethodInfo> Inspector::GetObjectMethods(void* obj, void* kl
 					info.returnTypeName = "void";
 				}
 
-				if (int paramCount = UR::Invoke<int, void*>("mono_signature_get_param_count", signature); paramCount >
-					0)
+				if (int paramCount = UR::Invoke<int, void*>("mono_signature_get_param_count", signature);
+				    paramCount > 0)
 				{
 					std::vector<char*> paramNames(paramCount);
 					UR::Invoke<void, void*, char**>("mono_method_get_param_names", method, paramNames.data());
@@ -212,14 +207,15 @@ std::vector<ComponentMethodInfo> Inspector::GetObjectMethods(void* obj, void* kl
 					void* mIter = nullptr;
 					void* mType;
 					int paramIndex = 0;
-					while (((mType = UR::Invoke<void*, void*, void*>("mono_signature_get_params", signature, &mIter)))
-						&& paramIndex < paramCount)
+					while (
+					    ((mType = UR::Invoke<void*, void*, void*>("mono_signature_get_params", signature, &mIter))) &&
+					    paramIndex < paramCount)
 					{
 						const char* paramTypeName = UR::Invoke<const char*, void*>("mono_type_get_name", mType);
-						std::string pName = (std::cmp_less(paramIndex, static_cast<int>(paramNames.size())) &&
-							                    paramNames[paramIndex])
-							                    ? paramNames[paramIndex]
-							                    : "arg" + std::to_string(paramIndex);
+						std::string pName =
+						    (std::cmp_less(paramIndex, static_cast<int>(paramNames.size())) && paramNames[paramIndex])
+						        ? paramNames[paramIndex]
+						        : "arg" + std::to_string(paramIndex);
 						std::string pType = paramTypeName ? paramTypeName : "unknown";
 						info.parameters.emplace_back(pName, pType);
 						info.parameterEditableTypes.push_back(DetermineEditableType(pType));
@@ -244,15 +240,11 @@ std::vector<ComponentMethodInfo> Inspector::GetObjectMethods(void* obj, void* kl
 				{
 					const char* pName = UR::Invoke<const char*, void*, int>("il2cpp_method_get_param_name", method, i);
 					void* pType = UR::Invoke<void*, void*, int>("il2cpp_method_get_param", method, i);
-					const char* pTypeName = pType
-						                        ? UR::Invoke<const char*, void*>("il2cpp_type_get_name", pType)
-						                        : nullptr;
+					const char* pTypeName =
+					    pType ? UR::Invoke<const char*, void*>("il2cpp_type_get_name", pType) : nullptr;
 
 					std::string typeName = pTypeName ? pTypeName : "unknown";
-					info.parameters.emplace_back(
-						pName ? pName : "arg" + std::to_string(i),
-						typeName
-					);
+					info.parameters.emplace_back(pName ? pName : "arg" + std::to_string(i), typeName);
 					info.parameterEditableTypes.push_back(DetermineEditableType(typeName));
 				}
 			}
@@ -282,8 +274,8 @@ void* Inspector::InvokeMethod(void* instance, const ComponentMethodInfo& method,
 
 	bool success = false;
 	void* obj = method.isStatic ? nullptr : instance;
-	void* result = Helper::SafeInvokeMethod(obj, method.methodHandle,
-	                                        params.empty() ? nullptr : params.data(), success);
+	void* result =
+	    Helper::SafeInvokeMethod(obj, method.methodHandle, params.empty() ? nullptr : params.data(), success);
 
 	return success ? result : nullptr;
 }
@@ -294,15 +286,14 @@ std::string Inspector::BuildObjectPath(UT::Transform* transform) const
 
 	std::vector<std::string> pathParts;
 	UT::Transform* current = transform;
+	std::unordered_set<UT::Transform*> visited;
 
-	while (current && Helper::SafeIsAlive(current))
+	while (current && pathParts.size() < 256 && visited.insert(current).second && Helper::SafeIsAlive(current))
 	{
 		UT::GameObject* go = nullptr;
-		if (!Helper::SafeGetGameObject(current, go) || !go)
-			break;
+		if (!Helper::SafeGetGameObject(current, go) || !go) break;
 
-		if (!Helper::SafeIsAlive(go))
-			break;
+		if (!Helper::SafeIsAlive(go)) break;
 
 		if (UT::String* name = nullptr; Helper::SafeGetName(go, name) && name)
 		{
@@ -310,8 +301,7 @@ std::string Inspector::BuildObjectPath(UT::Transform* transform) const
 		}
 
 		UT::Transform* parent = nullptr;
-		if (!Helper::SafeGetParent(current, parent))
-			break;
+		if (!Helper::SafeGetParent(current, parent)) break;
 		current = parent;
 	}
 
@@ -325,8 +315,12 @@ std::string Inspector::BuildObjectPath(UT::Transform* transform) const
 	return path;
 }
 
-void Inspector::BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform)
+void Inspector::BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform,
+	                               std::unordered_set<UT::Transform*>& visited, const size_t depth,
+	                               size_t& nodeBudget)
 {
+	if (depth >= 256 || nodeBudget == 0 || !transform || !visited.insert(transform).second) return;
+	--nodeBudget;
 	if (!Helper::SafeIsAlive(transform)) return;
 
 	node.transform = transform;
@@ -356,15 +350,15 @@ void Inspector::BuildHierarchyNode(HierarchyNode& node, UT::Transform* transform
 	}
 
 	int childCount = 0;
-	if (!Helper::SafeGetChildCount(transform, childCount))
-		return;
+	if (!Helper::SafeGetChildCount(transform, childCount)) return;
 
-	for (int i = 0; i < childCount; i++)
+	if (childCount < 0) return;
+	for (int i = 0; i < childCount && nodeBudget > 0; i++)
 	{
 		if (UT::Transform* child = nullptr; Helper::SafeGetChild(transform, i, child) && child)
 		{
 			HierarchyNode childNode;
-			BuildHierarchyNode(childNode, child);
+			BuildHierarchyNode(childNode, child, visited, depth + 1, nodeBudget);
 			if (childNode.gameObject)
 			{
 				node.children.push_back(std::move(childNode));
@@ -389,18 +383,19 @@ void Inspector::RefreshHierarchy()
 		if (transforms.empty()) return;
 	}
 
+	std::unordered_set<UT::Transform*> visited;
+	size_t nodeBudget = transforms.size();
 	for (const auto& t : transforms)
 	{
 		if (!Helper::SafeIsAlive(t)) continue;
 
 		UT::Transform* parent = nullptr;
-		if (!Helper::SafeGetParent(t, parent))
-			continue;
+		if (!Helper::SafeGetParent(t, parent)) continue;
 
 		if (!parent)
 		{
 			HierarchyNode node;
-			BuildHierarchyNode(node, t);
+			BuildHierarchyNode(node, t, visited, 0, nodeBudget);
 			if (node.gameObject)
 			{
 				rootNodes.push_back(std::move(node));
@@ -461,20 +456,16 @@ bool Inspector::PassesComponentFilter(const std::string& componentName, std::str
 	return Helper::CaseInsensitiveFind(componentName, lowerSearch);
 }
 
-bool Inspector::PassesFieldFilter(const ComponentFieldInfo& field, std::string_view lowerSearch, const bool editableOnly,
-                                  const bool staticOnly, const bool instanceOnly) const
+bool Inspector::PassesFieldFilter(const ComponentFieldInfo& field, std::string_view lowerSearch,
+                                  const bool editableOnly, const bool staticOnly, const bool instanceOnly) const
 {
-	if (!lowerSearch.empty() && !Helper::CaseInsensitiveFind(field.name, lowerSearch))
-		return false;
+	if (!lowerSearch.empty() && !Helper::CaseInsensitiveFind(field.name, lowerSearch)) return false;
 
-	if (editableOnly && field.editableType == EditableType::None)
-		return false;
+	if (editableOnly && field.editableType == EditableType::None) return false;
 
-	if (staticOnly && !field.isStatic)
-		return false;
+	if (staticOnly && !field.isStatic) return false;
 
-	if (instanceOnly && field.isStatic)
-		return false;
+	if (instanceOnly && field.isStatic) return false;
 
 	return true;
 }
@@ -482,26 +473,21 @@ bool Inspector::PassesFieldFilter(const ComponentFieldInfo& field, std::string_v
 bool Inspector::PassesPropertyFilter(const ComponentPropertyInfo& prop, std::string_view lowerSearch,
                                      const bool editableOnly) const
 {
-	if (!lowerSearch.empty() && !Helper::CaseInsensitiveFind(prop.name, lowerSearch))
-		return false;
+	if (!lowerSearch.empty() && !Helper::CaseInsensitiveFind(prop.name, lowerSearch)) return false;
 
-	if (editableOnly && !prop.canWrite)
-		return false;
+	if (editableOnly && !prop.canWrite) return false;
 
 	return true;
 }
 
-bool Inspector::PassesMethodFilter(const ComponentMethodInfo& method, std::string_view lowerSearch, const bool staticOnly,
-                                   const bool instanceOnly) const
+bool Inspector::PassesMethodFilter(const ComponentMethodInfo& method, std::string_view lowerSearch,
+                                   const bool staticOnly, const bool instanceOnly) const
 {
-	if (!lowerSearch.empty() && !Helper::CaseInsensitiveFind(method.name, lowerSearch))
-		return false;
+	if (!lowerSearch.empty() && !Helper::CaseInsensitiveFind(method.name, lowerSearch)) return false;
 
-	if (staticOnly && !method.isStatic)
-		return false;
+	if (staticOnly && !method.isStatic) return false;
 
-	if (instanceOnly && method.isStatic)
-		return false;
+	if (instanceOnly && method.isStatic) return false;
 
 	return true;
 }
@@ -516,8 +502,7 @@ void Inspector::OpenObjectInNewTab(UT::GameObject* obj)
 		return;
 	}
 
-	if (openTabs.size() >= maxTabs)
-		return;
+	if (openTabs.size() >= maxTabs) return;
 
 	InspectedObjectTab newTab;
 	newTab.gameObject = obj;
@@ -543,8 +528,7 @@ void Inspector::OpenObjectInNewTab(UT::GameObject* obj)
 
 void Inspector::CloseTab(const int tabIndex)
 {
-	if (tabIndex < 0 || std::cmp_greater_equal(tabIndex, static_cast<int>(openTabs.size())))
-		return;
+	if (tabIndex < 0 || std::cmp_greater_equal(tabIndex, static_cast<int>(openTabs.size()))) return;
 
 	openTabs.erase(openTabs.begin() + tabIndex);
 
@@ -562,8 +546,7 @@ void Inspector::CloseTab(const int tabIndex)
 
 void Inspector::SwitchToTab(const int tabIndex)
 {
-	if (tabIndex < 0 || std::cmp_greater_equal(tabIndex, openTabs.size()))
-		return;
+	if (tabIndex < 0 || std::cmp_greater_equal(tabIndex, openTabs.size())) return;
 
 	activeTabIndex = tabIndex;
 	pendingTabSwitch = true;
@@ -573,8 +556,7 @@ void Inspector::SwitchToTab(const int tabIndex)
 
 InspectedObjectTab* Inspector::GetActiveTab() const
 {
-	if (activeTabIndex < 0 || std::cmp_greater_equal(activeTabIndex, openTabs.size()))
-		return nullptr;
+	if (activeTabIndex < 0 || std::cmp_greater_equal(activeTabIndex, openTabs.size())) return nullptr;
 
 	return const_cast<InspectedObjectTab*>(&openTabs[activeTabIndex]);
 }
@@ -583,8 +565,7 @@ int Inspector::FindTabForObject(const UT::GameObject* obj) const
 {
 	for (size_t i = 0; i < openTabs.size(); ++i)
 	{
-		if (openTabs[i].gameObject == obj)
-			return static_cast<int>(i);
+		if (openTabs[i].gameObject == obj) return static_cast<int>(i);
 	}
 	return -1;
 }

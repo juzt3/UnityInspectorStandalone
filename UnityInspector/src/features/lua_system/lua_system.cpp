@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "lua_system.h"
-#include "lua_plugin.h"
-#include "lua_bindings.h"
-#include "features/debug_console/debug_console.h"
 #include "config/config.h"
+#include "features/debug_console/debug_console.h"
+#include "lua_bindings.h"
+#include "lua_plugin.h"
+#include "lua_system.h"
 
-//REGISTER_FEATURE(LuaSystem)  // manually registered in features.cpp to avoid static init crash
+// REGISTER_FEATURE(LuaSystem)  // manually registered in features.cpp to avoid static init crash
 
 void LuaSystem::Init()
 {
@@ -65,8 +65,7 @@ void LuaSystem::ScanPlugins()
 	if (!luaState) return;
 	plugins.clear();
 
-	if (!std::filesystem::exists(pluginsDir))
-		return;
+	if (!std::filesystem::exists(pluginsDir)) return;
 
 	for (const auto& entry : std::filesystem::directory_iterator(pluginsDir))
 	{
@@ -82,8 +81,7 @@ void LuaSystem::ScanPlugins()
 void LuaSystem::CheckHotReload()
 {
 	if (!luaState) return;
-	if (!std::filesystem::exists(pluginsDir))
-		return;
+	if (!std::filesystem::exists(pluginsDir)) return;
 
 	try
 	{
@@ -91,16 +89,12 @@ void LuaSystem::CheckHotReload()
 
 		for (const auto& entry : std::filesystem::directory_iterator(pluginsDir))
 		{
-			if (!entry.is_regular_file() || entry.path().extension() != ".lua")
-				continue;
+			if (!entry.is_regular_file() || entry.path().extension() != ".lua") continue;
 
 			std::string pathStr = entry.path().string();
 			foundFiles.insert(pathStr);
 
-			auto it = std::ranges::find_if(plugins, [&](const auto& p)
-			{
-				return p->GetFilePath() == entry.path();
-			});
+			auto it = std::ranges::find_if(plugins, [&](const auto& p) { return p->GetFilePath() == entry.path(); });
 
 			if (it != plugins.end())
 			{
@@ -128,15 +122,16 @@ void LuaSystem::CheckHotReload()
 			}
 		}
 
-		std::erase_if(plugins, [&](const auto& p)
-		{
-			if (std::string pathStr = p->GetFilePath().string(); !foundFiles.contains(pathStr))
-			{
-				LOG_INFO("Unloaded removed plugin: {}", p->GetName());
-				return true;
-			}
-			return false;
-		});
+		std::erase_if(plugins,
+		              [&](const auto& p)
+		              {
+			              if (std::string pathStr = p->GetFilePath().string(); !foundFiles.contains(pathStr))
+			              {
+				              LOG_INFO("Unloaded removed plugin: {}", p->GetName());
+				              return true;
+			              }
+			              return false;
+		              });
 	}
 	catch (const std::exception& e)
 	{
@@ -158,8 +153,7 @@ void LuaSystem::Update(float deltaTime)
 	UR::ThreadAttach();
 	for (auto& plugin : plugins)
 	{
-		if (plugin->IsEnabled())
-			plugin->Update(deltaTime);
+		if (plugin->IsEnabled()) plugin->Update(deltaTime);
 	}
 }
 
@@ -170,12 +164,10 @@ void LuaSystem::Render()
 	UR::ThreadAttach();
 	for (auto& plugin : plugins)
 	{
-		if (plugin->IsEnabled())
-			plugin->Render();
+		if (plugin->IsEnabled()) plugin->Render();
 	}
 
-	if (showConsole)
-		RenderLuaConsole();
+	if (showConsole) RenderLuaConsole();
 }
 
 void LuaSystem::RenderLuaConsole()
